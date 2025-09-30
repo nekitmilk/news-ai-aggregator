@@ -1,7 +1,11 @@
 import uuid
+from datetime import datetime
+from typing import Optional, List, Any
 
 from pydantic import EmailStr
+from pydantic import BaseModel
 from sqlmodel import Field, Relationship, SQLModel
+from sqlalchemy import Text
 
 
 # Shared properties
@@ -111,3 +115,109 @@ class TokenPayload(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=40)
+
+
+# ===== BASE RESPONSE MODELS =====
+class ErrorResponse(SQLModel):
+    code: int
+    message: str
+
+class HTTPErrorResponse(BaseModel):
+    detail: str
+
+class ResponseAPI(SQLModel):
+    success: bool
+    requestId: str
+    message: str
+    result: Optional[Any] = None
+    errors: Optional[ErrorResponse] = None
+
+    class Config:
+        from_attributes = True
+
+# ===== Source MODELS =====
+class Source(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field(unique=True, index=True, max_length=255)
+    domain: str = Field(max_length=255)
+    news: list["ProcessedNews"] = Relationship(back_populates="source")
+
+class SourceBase(SQLModel):
+    name: str
+    domain: str
+
+class SourceCreate(SourceBase):
+    pass
+
+class SourceResponse(SourceBase):
+    id: uuid.UUID
+
+class SourceListResponse(ResponseAPI):
+    result: List[SourceResponse]
+
+
+# ===== Category MODELS =====
+class Category(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field(unique=True, index=True, max_length=100)
+    news: list["ProcessedNews"] = Relationship(back_populates="category")
+
+class CategoryBase(SQLModel):
+    name: str
+
+class CategoryCreate(CategoryBase):
+    pass
+
+class CategoryResponse(CategoryBase):
+    id: uuid.UUID
+
+class CategoriesListResponse(ResponseAPI):
+    result: List[CategoryResponse]
+
+
+# ===== NEWS MODELS =====
+class ProcessedNews(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    title: str = Field(index=True, max_length=500)
+    summary: str = Field(sa_type=Text)
+    url: str = Field(max_length=500)
+    published_at: datetime = Field(index=True)
+    
+    # Внешние ключи
+    source_id: uuid.UUID = Field(foreign_key="source.id")
+    category_id: uuid.UUID = Field(foreign_key="category.id")
+    
+    # Связи
+    source: Source = Relationship(back_populates="news")
+    category: Category = Relationship(back_populates="news")
+
+class NewsBase(SQLModel):
+    title: str
+    summary: str
+    url: str
+    published_at: datetime
+
+class NewsCreate(NewsBase):
+    source_id: uuid.UUID
+    category_id: uuid.UUID
+
+class NewsResponse(SQLModel):
+    id: uuid.UUID
+    title: str
+    summary: str  
+    category: str 
+    source: str
+    url: str
+    date: str  # Дата публикации в формате "dd:mm:YYYY"
+
+class NewsListResponse(ResponseAPI):
+    result: List[NewsResponse]
+
+class NewsFilter(BaseModel):
+    category: Optional[str] = None
+    source: Optional[str] = None
+    search: Optional[str] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    page: int = 1
+    limit: int = 20
