@@ -162,6 +162,24 @@ services:
 
       # Enable redirection for HTTP and HTTPS
       - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.middlewares=https-redirect
+
+  parser:
+    build:
+      context: ./parser
+      dockerfile: Dockerfile
+    container_name: news_parser
+    volumes:
+      - ./data:/app/data
+      - ./config.json:/app/config.json:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=Europe/Moscow
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; print('OK')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 volumes:
   app-db-data:
 
