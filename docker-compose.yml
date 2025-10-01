@@ -167,19 +167,35 @@ services:
     build:
       context: ./parser
       dockerfile: Dockerfile
-    container_name: news_parser
-    volumes:
-      - ./data:/app/data
-      - ./config.json:/app/config.json:ro
+    container_name: parser_app
+    restart: always
+    depends_on:
+      - redis
+      - rabbitmq
     environment:
       - PYTHONUNBUFFERED=1
-      - TZ=Europe/Moscow
-    healthcheck:
-      test: ["CMD", "python", "-c", "import os; print('OK')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: python parser/main.py   # или ваш entrypoint
+
+  redis:
+    image: redis:7-alpine
+    container_name: parser_redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: parser_rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"   # RabbitMQ (AMQP)
+      - "15672:15672" # Web UI http://localhost:15672/
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
 volumes:
   app-db-data:
 

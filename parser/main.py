@@ -1,10 +1,11 @@
-import os
 import time
 import json
 import random
 import asyncio
 import schedule
 import threading
+import redis
+import pika
 from datetime import datetime
 from parser import Parser
 
@@ -16,15 +17,64 @@ class RunParser:
             resources=self.conf["parser"]["resources"],
         )
 
+        self.redis_client = redis.StrictRedis(
+            host=self.conf["redis"]["host"],
+            port=self.conf["redis"]["port"],
+            db=self.conf["redis"].get("db", 0),
+            decode_responses=True
+        )
+
+        self.rabbit_connection = pika.BlockingConnection(
+            pika.ConnectionParameters(
+                host=self.conf["rabbitmq"]["host"],
+                port=self.conf["rabbitmq"].get("port", 5672),
+                credentials=pika.PlainCredentials(
+                    self.conf["rabbitmq"]["user"],
+                    self.conf["rabbitmq"]["password"]
+                )
+            )
+        )
+        self.rabbit_channel = self.rabbit_connection.channel()
+        self.rabbit_channel.queue_declare(queue=self.conf["rabbitmq"]["queue"], durable=True)
+
     def write_resource_news(self, resource):
         try:
+            # создаем отдельное соединение для каждого потока
+            rabbit_connection = pika.BlockingConnection(
+                pika.ConnectionParameters(
+                    host=self.conf["rabbitmq"]["host"],
+                    port=self.conf["rabbitmq"].get("port", 5672),
+                    credentials=pika.PlainCredentials(
+                        self.conf["rabbitmq"]["user"],
+                        self.conf["rabbitmq"]["password"]
+                    )
+                )
+            )
+            rabbit_channel = rabbit_connection.channel()
+            rabbit_channel.queue_declare(queue=self.conf["rabbitmq"]["queue"], durable=True)
+
             news = asyncio.run(self.parser.get_news(resource, limit=self.conf['parser']['news_limit']))
-            os.makedirs("data", exist_ok=True)
-            with open(f"data/{resource.upper()}-{time.time()}.json", 'w', encoding="utf-8") as file:
-                json.dump(news, file,
-                        ensure_ascii=False,
-                        indent=4,
-                        default=json_serializer)
+            for n in news:
+                n["source"] = resource
+                n["source_type"] = "telegram" if "t.me" in n.get("url", "") else "rss"
+                header_key = n["header"]
+
+                news_json = json.dumps(n, ensure_ascii=False, indent=4, default=json_serializer)
+                self.redis_client.set(header_key, news_json)
+
+                if self.redis_client.exists(header_key):
+                    rabbit_channel.basic_publish(
+                        exchange="",
+                        routing_key=self.conf["rabbitmq"]["queue"],
+                        body=header_key,
+                        properties=pika.BasicProperties(delivery_mode=2)
+                    )
+                    print(f"[OK] {resource}: новость '{header_key}' сохранена в Redis и отправлена в RabbitMQ")
+                else:
+                    print(f"[ERR] {resource}: не удалось сохранить новость '{header_key}' в Redis")
+
+            rabbit_connection.close()
+
         except Exception as e:
             raise Exception(f"write_resource_news:{resource}: {e}")
 

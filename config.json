@@ -151,5 +151,17 @@
         "api_id": 10068785,
         "api_hash": "c188a8e1733c82afe42cb728bddfa125",
         "phone": "+79648340747"
+    },
+    "redis": {
+        "host": "redis",
+        "port": 6379,
+        "db": 0
+    },
+    "rabbitmq": {
+        "host": "rabbitmq",
+        "port": 5672,
+        "user": "guest",
+        "password": "guest",
+        "queue": "news_queue"
     }
 }
