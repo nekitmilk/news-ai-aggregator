@@ -39,7 +39,7 @@ class Parser:
         
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
-        news_data = [result for result in results if isinstance(result, dict)]
+        news_data = [{**result, "sourse": resource, "sourse_type": "web"} for result in results if isinstance(result, dict)]
         return news_data
 
     async def _parse_news_article(self, url: str):
@@ -173,6 +173,7 @@ class TgParser:
                         'date': message.date,
                         'url': f"https://t.me/{channel_username.replace('@', '')}/{message.id}"
                     })
+                    #TODO добавить нужные элементы
             
             await self.client.disconnect()
             return messages_data
