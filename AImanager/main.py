@@ -5,6 +5,7 @@ import logging
 import threading
 from queue import Queue
 from manager import SummarizerManager
+from categorizer_manager import CategorizerManager  # 👈 добавляем импорт
 
 logger = logging.getLogger("NewsConsumer")
 logger.setLevel(logging.INFO)
@@ -34,7 +35,7 @@ class NewsConsumer:
                     conf['rabbitmq']['user'],
                     conf['rabbitmq']['password']
                 ),
-                heartbeat=600,  # 10 минут
+                heartbeat=600,
                 blocked_connection_timeout=300
             )
         )
@@ -43,9 +44,15 @@ class NewsConsumer:
         self.channel.basic_qos(prefetch_count=1)
         logger.info("✅ Подключение к RabbitMQ успешно")
 
+        # --- Summarizer ---
         logger.info("⏳ Загружаем Summarizer на GPU...")
         self.summarizer_manager = SummarizerManager(device=0)
         logger.info("✅ Summarizer загружен")
+
+        # --- Categorizer ---
+        logger.info("⏳ Загружаем Categorizer на GPU...")
+        self.categorizer_manager = CategorizerManager(device=0)
+        logger.info("✅ Categorizer загружен")
 
         self.model_queue = Queue()
         self.model_thread = threading.Thread(target=self.model_worker, daemon=True)
@@ -62,18 +69,54 @@ class NewsConsumer:
         while True:
             key, text, ch, method = self.model_queue.get()
             try:
+                # --- Summarization ---
                 summary, duration = self.summarizer_manager.summarize(text)
                 logger.info(f"[SUMMARY]: {summary}")
                 logger.info(f"⏱ Время суммаризации: {duration:.2f} сек")
 
+                # --- Categorization ---
+                categories, cat_duration = self.categorizer_manager.categorize(summary)
+                best_cat = categories[0]["label"] if categories else ""
+                score = categories[0]["score"] if categories else 0
+                logger.info(f"[CATEGORY]: {best_cat} (score={score:.2f})")
+                logger.info(f"⏱ Время категоризации: {cat_duration:.2f} сек")
+
+                # --- Формируем JSON для продюсера ---
+                processed_news = {
+                    "id": str(uuid.uuid4()),
+                    "title": self.redis_client.get(key) and json.loads(self.redis_client.get(key)).get('header', ''),
+                    "summary": summary,
+                    "category": best_cat,
+                    "source": self.redis_client.get(key) and json.loads(self.redis_client.get(key)).get('source_name', ''),
+                    "url": self.redis_client.get(key) and json.loads(self.redis_client.get(key)).get('url', ''),
+                    "date": self.redis_client.get(key) and json.loads(self.redis_client.get(key)).get('date', '')
+                }
+
+                # --- Отправляем в отдельную очередь ---
+                self.send_to_processed_queue(processed_news)
+
                 ch.basic_ack(delivery_tag=method.delivery_tag)
 
             except Exception as e:
-                logger.error(f"❌ Ошибка при суммаризации: {e}", exc_info=True)
+                logger.error(f"❌ Ошибка при обработке текста: {e}", exc_info=True)
                 ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
             finally:
                 self.model_queue.task_done()
+
+    def send_to_processed_queue(self, news_json: dict):
+        """Отправка обработанной новости в отдельную очередь"""
+        queue_name = self.conf['rabbitmq'].get('processed_queue', 'processed_news')
+        self.channel.queue_declare(queue=queue_name, durable=True)
+        self.channel.basic_publish(
+            exchange='',
+            routing_key=queue_name,
+            body=json.dumps(news_json),
+            properties=pika.BasicProperties(
+                delivery_mode=2  # сохраняем сообщение при падении сервера
+            )
+        )
+        logger.info(f"📤 Новость отправлена в очередь '{queue_name}'")
 
     def start_consuming(self):
         logger.info("🚀 Консюмер запущен. Ожидание сообщений...")
@@ -109,8 +152,16 @@ class NewsConsumer:
                 summary, duration = self.summarizer_manager.summarize(text)
                 logger.info(f"[SUMMARY]: {summary}")
                 logger.info(f"⏱ Время суммаризации: {duration:.2f} сек")
+
+                categories, cat_duration = self.categorizer_manager.categorize(summary)
+                if categories:
+                    best_cat = categories[0]["label"]
+                    score = categories[0]["score"]
+                    logger.info(f"[CATEGORY]: {best_cat} (score={score:.2f})")
+                logger.info(f"⏱ Время категоризации: {cat_duration:.2f} сек")
+
             except Exception as e:
-                logger.error(f"❌ Ошибка при суммаризации: {e}", exc_info=True)
+                logger.error(f"❌ Ошибка при обработке текста: {e}", exc_info=True)
             finally:
                 ch.basic_ack(delivery_tag=method.delivery_tag)
         else:
