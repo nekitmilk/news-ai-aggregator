@@ -163,5 +163,9 @@
         "user": "guest",
         "password": "guest",
         "queue": "news_queue"
+    },
+    "consumer": {
+        "processing_limit": 10,
+        "poll_interval": 5
     }
 }

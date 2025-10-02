@@ -196,6 +196,33 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=guest
       - RABBITMQ_DEFAULT_PASS=guest
+
+  consumer:
+    build:
+      context: .
+      dockerfile: AImanager/Dockerfile
+    container_name: consumer_app
+    restart: always
+    depends_on:
+      - redis
+      - rabbitmq
+    environment:
+      - PYTHONUNBUFFERED=1
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: python AImanager/main.py
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    runtime: nvidia
+
 volumes:
   app-db-data:
 
