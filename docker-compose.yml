@@ -210,8 +210,11 @@ services:
       - PYTHONUNBUFFERED=1
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - TRANSFORMERS_CACHE=/root/.cache/huggingface
+      - HF_HOME=/root/.cache/huggingface
     volumes:
       - .:/app
+      - ./models:/root/.cache/huggingface
     working_dir: /app
     command: python AImanager/main.py
     deploy:

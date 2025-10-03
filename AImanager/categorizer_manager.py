@@ -1,5 +1,6 @@
 import logging
 import time
+import os
 from transformers import pipeline
 
 logger = logging.getLogger("CategorizerManager")
@@ -9,22 +10,23 @@ formatter = logging.Formatter("[%(asctime)s] [%(levelname)s] %(message)s")
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
-
 class CategorizerManager:
     def __init__(self, device=0):
-        logger.info(f"🔄 Инициализация CategorizerManager...")
+        logger.info("🔄 Инициализация CategorizerManager...")
         start = time.time()
 
         model_name = "cointegrated/rubert-base-cased-nli-threeway"
+        cache_dir = os.environ.get("HF_HOME", "/root/.cache/huggingface")
 
-        logger.info(f"⚡ Загружаем Zero-Shot классификатор {model_name} на device={device}...")
+        logger.info(f"⚡ Загружаем Zero-Shot классификатор {model_name} на device={device} с cache_dir={cache_dir}...")
         self.classifier = pipeline(
             "zero-shot-classification",
             model=model_name,
-            device=device
+            tokenizer=model_name,
+            device=device,
+            cache_dir=cache_dir
         )
 
-        # 🔑 Список твоих категорий
         self.CATEGORIES = [
             "политика",
             "экономика",
@@ -40,9 +42,9 @@ class CategorizerManager:
         logger.info(f"✅ CategorizerManager готов (инициализация заняла {time.time() - start:.2f} сек)")
 
     def categorize(self, text: str, top_k=1):
-        if not text:
+        if not text.strip():
             logger.warning("⚠️ Попытка классифицировать пустой текст")
-            return None, 0
+            return [], 0.0
 
         logger.info("🚀 Запуск категоризации...")
         start_time = time.time()
@@ -53,7 +55,6 @@ class CategorizerManager:
             multi_label=False
         )
 
-        # Приводим к такому же виду как у Summarizer
         categories = [
             {"label": label, "score": score}
             for label, score in zip(result["labels"], result["scores"])
@@ -61,5 +62,4 @@ class CategorizerManager:
 
         end_time = time.time()
         logger.info(f"✅ Категоризация завершена за {end_time - start_time:.2f} секунд")
-
         return categories[:top_k], end_time - start_time
