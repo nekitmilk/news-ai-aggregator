@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 import aio_pika
 from aio_pika.abc import AbstractIncomingMessage
 from sqlmodel import Session, select
-import datetime
+from datetime import datetime
 
 from app.core.config import settings
 from app.core.db import engine
@@ -105,7 +105,7 @@ class NewsConsumer:
 
                 published_date = news_data.get("published_date", "")
                 if not published_date:
-                    published_date = datetime.utcnow()
+                    published_date = datetime.now()
 
                 summary=news_data.get("summary", "").strip()
                 
