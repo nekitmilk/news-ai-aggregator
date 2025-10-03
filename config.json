@@ -158,11 +158,12 @@
         "db": 0
     },
     "rabbitmq": {
-        "host": "rabbitmq",
-        "port": 5672,
-        "user": "guest",
-        "password": "guest",
-        "queue": "news_queue"
+    "host": "rabbitmq",
+    "port": 5672,
+    "user": "guest",
+    "password": "guest",
+    "queue": "news_queue",
+    "processed_queue": "processed_news"
     },
     "consumer": {
         "processing_limit": 10,
