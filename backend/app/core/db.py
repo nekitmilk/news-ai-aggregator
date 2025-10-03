@@ -7,91 +7,47 @@ from app.models import User, UserCreate, Source, Category, ProcessedNews
 from datetime import datetime, timedelta
 import uuid
 
+# ---------- Инициализация движка ----------
 engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
 
 
-# make sure all SQLModel models are imported (app.models) before initializing DB
-# otherwise, SQLModel might fail to initialize relationships properly
-# for more details: https://github.com/fastapi/full-stack-fastapi-template/issues/28
+# ---------- Константы ----------
+CATEGORIES_DATA = [
+    {"name": "Политика"},
+    {"name": "Экономика"},
+    {"name": "Спорт"},
+    {"name": "Технологии"},
+    {"name": "Общество"},
+    {"name": "Культура"},
+    {"name": "Наука"},
+    {"name": "Медицина"},
+]
+
+SOURCE_DATA = [
+    {"name": "ТАСС", "domain": "tass.ru"},
+    {"name": "РБК", "domain": "rbc.ru"},
+    {"name": "РИА Новости", "domain": "ria.ru"},
+    {"name": "Интерфакс", "domain": "interfax.ru"},
+    {"name": "Коммерсант", "domain": "kommersant.ru"},
+]
 
 
-def init_db(session: Session) -> None:
-    # Tables should be created with Alembic migrations
-    # But if you don't want to use migrations, create
-    # the tables un-commenting the next lines
-    # from sqlmodel import SQLModel
+# ---------- Вспомогательные функции ----------
+def get_or_create(session: Session, model, filters: dict, defaults: dict = None):
+    """Ищет объект по filters, если нет — создаёт с defaults"""
+    instance = session.exec(select(model).filter_by(**filters)).first()
+    if instance:
+        return instance
+    data = {**filters, **(defaults or {})}
+    instance = model(**data)
+    session.add(instance)
+    session.flush()  # нужно, чтобы у instance появился id
+    return instance
 
-    # This works because the models are already imported and registered from app.models
-    # SQLModel.metadata.create_all(engine)
 
-    user = session.exec(
-        select(User).where(User.email == settings.FIRST_SUPERUSER)
-    ).first()
-    if not user:
-        user_in = UserCreate(
-            email=settings.FIRST_SUPERUSER,
-            password=settings.FIRST_SUPERUSER_PASSWORD,
-            is_superuser=True,
-        )
-        user = crud.create_user(session=session, user_create=user_in)
-    
-    init_news_data(session)
-
-def init_news_data(session: Session) -> None:
-    """
-    Initialize news sources, categories and sample news
-    """
-    # Источники новостей
-    sources_data = [
-        {"name": "ТАСС", "domain": "tass.ru"},
-        {"name": "РБК", "domain": "rbc.ru"},
-        {"name": "РИА Новости", "domain": "ria.ru"},
-        {"name": "Интерфакс", "domain": "interfax.ru"},
-        {"name": "Коммерсант", "domain": "kommersant.ru"},
-    ]
-    
-    sources = {}
-    for source_data in sources_data:
-        existing_source = session.exec(
-            select(Source).where(Source.name == source_data["name"])
-        ).first()
-        if not existing_source:
-            source = Source(**source_data)
-            session.add(source)
-            session.flush()
-            sources[source_data["name"]] = source
-        else:
-            sources[source_data["name"]] = existing_source
-
-    # Категории новостей
-    categories_data = [
-        {"name": "Политика"},
-        {"name": "Экономика"},
-        {"name": "Спорт"},
-        {"name": "Технологии"},
-        {"name": "Общество"},
-        {"name": "Культура"},
-        {"name": "Наука"},
-        {"name": "Медицина"},
-    ]
-    
-    categories = {}
-    for category_data in categories_data:
-        existing_category = session.exec(
-            select(Category).where(Category.name == category_data["name"])
-        ).first()
-        if not existing_category:
-            category = Category(**category_data)
-            session.add(category)
-            session.flush()
-            categories[category_data["name"]] = category
-        else:
-            categories[category_data["name"]] = existing_category
-
-    session.commit()
-
-    # Тестовые новости (используем правильное имя модели ProcessedNews)
-    sample_news = [
+def generate_sample_news():
+    """Возвращает список тестовых новостей с динамическими датами"""
+    return [
         {
             "title": "ЦБ сохранил ключевую ставку на уровне 16%",
             "summary": "Центральный банк России принял решение сохранить ключевую ставку на уровне 16% годовых.",
@@ -174,21 +130,60 @@ def init_news_data(session: Session) -> None:
         }
     ]
 
-    # Добавляем новости, если их еще нет (используем ProcessedNews)
-    for news_data in sample_news:
+
+# ---------- Основные функции ----------
+def init_db(session: Session) -> None:
+    """
+    Инициализация базы: создание суперпользователя и базовых данных
+    """
+    # создаём суперпользователя, если его ещё нет
+    user = session.exec(
+        select(User).where(User.email == settings.FIRST_SUPERUSER)
+    ).first()
+    if not user:
+        user_in = UserCreate(
+            email=settings.FIRST_SUPERUSER,
+            password=settings.FIRST_SUPERUSER_PASSWORD,
+            is_superuser=True,
+        )
+        crud.create_user(session=session, user_create=user_in)
+
+    init_news_data(session)
+
+
+def init_news_data(session: Session) -> None:
+    """
+    Инициализация новостных источников, категорий и тестовых новостей
+    """
+    # создаём источники
+    sources = {
+        s["name"]: get_or_create(session, Source, {"name": s["name"]}, {"domain": s["domain"]})
+        for s in SOURCE_DATA
+    }
+
+    # создаём категории
+    categories = {
+        c["name"]: get_or_create(session, Category, {"name": c["name"]})
+        for c in CATEGORIES_DATA
+    }
+
+    session.commit()
+
+    # создаём тестовые новости
+    for news_data in generate_sample_news():
         existing_news = session.exec(
-            select(ProcessedNews).where(ProcessedNews.title == news_data["title"])  # ← ProcessedNews!
+            select(ProcessedNews).where(ProcessedNews.title == news_data["title"])
         ).first()
-        
+
         if not existing_news:
-            news = ProcessedNews(  # ← ProcessedNews!
+            news = ProcessedNews(
                 id=uuid.uuid4(),
                 title=news_data["title"],
                 summary=news_data["summary"],
                 url=news_data["url"],
                 published_at=news_data["published_at"],
                 source_id=sources[news_data["source"]].id,
-                category_id=categories[news_data["category"]].id
+                category_id=categories[news_data["category"]].id,
             )
             session.add(news)
 
