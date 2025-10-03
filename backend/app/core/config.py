@@ -94,6 +94,11 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
 
+    RABBITMQ_URL: str = "amqp://guest:guest@localhost:5672/"
+    RABBITMQ_PROCESSED_NEWS_QUEUE: str = "processed_news"
+    RABBITMQ_RAW_NEWS_QUEUE: str = "raw_news"
+    RABBITMQ_RECONNECT_DELAY: int = 5
+
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
             message = (
