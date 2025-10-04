@@ -99,23 +99,32 @@ def get_categories(session: Session, page: int = 0, limit: int = 100) -> List[Ca
 
 def get_news_with_filters(session: Session, filters: NewsFilter) -> List[ProcessedNews]:
     statement = select(ProcessedNews).join(Source).join(Category)
+
+    conditions = []
     
-    if filters.category:
-        statement = statement.where(Category.name == filters.category)
-    if filters.source:
-        statement = statement.where(Source.name == filters.source)
+    if filters.category_ids:
+        conditions.append(Category.id.in_(filters.category_ids))
+    if filters.source_ids:
+        conditions.append(Source.id.in_(filters.source_ids))
     if filters.search:
         search_term = f"%{filters.search}%"
-        statement = statement.where(
+        conditions.append(
             (ProcessedNews.title.ilike(search_term)) | 
             (ProcessedNews.summary.ilike(search_term))
         )
     if filters.start_date:
-        statement = statement.where(ProcessedNews.published_at >= filters.start_date)
+        conditions.append(ProcessedNews.published_at >= filters.start_date)
     if filters.end_date:
-        statement = statement.where(ProcessedNews.published_at <= filters.end_date)
+        conditions.append(ProcessedNews.published_at <= filters.end_date)
     
-    statement = statement.order_by(ProcessedNews.published_at.desc())
+    if conditions:
+        statement = statement.where(*conditions)
+    
+    if filters.sort_order == "asc":
+        statement = statement.order_by(ProcessedNews.published_at.asc())
+    else:
+        statement = statement.order_by(ProcessedNews.published_at.desc())
+    
     skip = (filters.page - 1) * filters.limit
     statement = statement.offset(skip).limit(filters.limit)
     
