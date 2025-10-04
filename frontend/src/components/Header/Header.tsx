@@ -1,5 +1,5 @@
 import { Group, Container, Button, Text, Menu, Avatar } from '@mantine/core';
-import { IconBrandTelegram, IconNews, IconLogout, IconUser } from '@tabler/icons-react';
+import { IconBrandTelegram, IconNews, IconLogout } from '@tabler/icons-react';
 import { ITelegramUser } from '../../types/telegram';
 import classes from './Header.module.scss';
 

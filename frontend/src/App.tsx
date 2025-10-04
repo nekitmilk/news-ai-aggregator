@@ -56,7 +56,6 @@ export default function App() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<ITelegramUser | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -124,7 +123,6 @@ export default function App() {
         setNews(newNews);
         setPage(1);
       }
-      setHasMore(newNews.length === filters.limit);
     } catch (error) {
       console.error('Error fetching news:', error);
     } finally {

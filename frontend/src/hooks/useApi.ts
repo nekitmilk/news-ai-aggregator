@@ -1,10 +1,10 @@
 import { useState, useCallback } from 'react';
 import axios from 'axios';
 
-interface UseApiOptions {
-  onSuccess?: (data: any) => void;
-  onError?: (error: string) => void;
-}
+// interface UseApiOptions {
+//   onSuccess?: (data: any) => void;
+//   onError?: (error: string) => void;
+// }
 
 export function useApi() {
   const [loading, setLoading] = useState(false);
