@@ -122,13 +122,11 @@ class NewsConsumer:
 
                 # --- Формируем JSON ---
                 processed_news = {
+                    **news_data,
                     "id": str(uuid.uuid4()),
                     "title": news_data.get('header', ''),
                     "summary": summary,
-                    "category": best_cat,
-                    "source": news_data.get('source_name', ''),
-                    "url": news_data.get('url', ''),
-                    "date": news_data.get('date', '')
+                    "category": best_cat
                 }
 
                 result_queue.put(("success", processed_news))
