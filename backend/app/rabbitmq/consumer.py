@@ -46,18 +46,18 @@ class NewsConsumer:
                 raise ConnectionError(f"Queue {settings.RABBITMQ_PROCESSED_NEWS_QUEUE} not found")
             
             self.is_connected = True
-            logger.info("✅ Successfully connected to RabbitMQ")
+            logger.info("Successfully connected to RabbitMQ")
             return True
             
         except Exception as e:
-            logger.error(f"❌ Connection failed: {e}")
+            logger.error(f"Connection failed: {e}")
             self.is_connected = False
             return False
     
     async def wait_for_connection(self):
         """Ожидание восстановления подключения"""
         while self.is_running and not self.is_connected:
-            logger.info(f"🔄 Waiting for RabbitMQ... (retry in {self.reconnect_delay}s)")
+            logger.info(f"Waiting for RabbitMQ... (retry in {self.reconnect_delay}s)")
             await asyncio.sleep(self.reconnect_delay)
             
             if await self.connect():
@@ -76,7 +76,7 @@ class NewsConsumer:
             try:
                 # Начинаем потребление сообщений
                 await self.queue.consume(self.process_message)
-                logger.info("🎯 Started consuming messages from RabbitMQ")
+                logger.info("Started consuming messages from RabbitMQ")
                 
                 # Ждем пока соединение активно
                 await asyncio.Future()  # Бесконечное ожидание
@@ -85,7 +85,7 @@ class NewsConsumer:
                 logger.info("Consumer was cancelled")
                 break
             except Exception as e:
-                logger.error(f"❌ Connection lost: {e}")
+                logger.error(f"Connection lost: {e}")
                 self.is_connected = False
                 await self.disconnect()
     
@@ -94,13 +94,13 @@ class NewsConsumer:
         try:
             async with message.process():
                 news_data = json.loads(message.body.decode())
-                logger.info(f"📨 Processing: {news_data.get('title')}")
+                logger.info(f"Processing: {news_data.get('title')}")
                 await self.save_processed_news(news_data)
                 
         except json.JSONDecodeError as e:
-            logger.error(f"❌ Invalid JSON: {e}")
+            logger.error(f"Invalid JSON: {e}")
         except Exception as e:
-            logger.error(f"❌ Message processing error: {e}")
+            logger.error(f"Message processing error: {e}")
     
     async def save_processed_news(self, news_data: Dict[str, Any]):
         """Сохранение новости в БД"""
@@ -125,7 +125,7 @@ class NewsConsumer:
                     select(ProcessedNews).where(ProcessedNews.url == news_data.get("url", ""))
                 ).first()
                 if existing:
-                    logger.info(f"⚠️ News already exists: {title}")
+                    logger.info(f"News already exists: {title}")
                     return
                 
                 source_name = news_data.get("source_name", "Unknown Source").strip()
@@ -146,10 +146,10 @@ class NewsConsumer:
                 
                 session.add(db_news)
                 session.commit()
-                logger.info(f"✅ Saved: {title}")
+                logger.info(f"Saved: {title}")
                 
         except Exception as e:
-            logger.error(f"❌ Save error: {e}")
+            logger.error(f"Save error: {e}")
     
     def extract_domain(self, url: str) -> str:
         """Извлекает домен из URL"""
@@ -170,7 +170,7 @@ class NewsConsumer:
             session.add(source)
             session.commit()
             session.refresh(source)
-            logger.info(f"📝 Created source: {name}")
+            logger.info(f"Created source: {name}")
         return source
     
     async def get_or_create_category(self, session: Session, name: str) -> Category:
@@ -181,7 +181,7 @@ class NewsConsumer:
             session.add(category)
             session.commit()
             session.refresh(category)
-            logger.info(f"📝 Created category: {name}")
+            logger.info(f"Created category: {name}")
         return category
     
     async def parse_published_date(self, date_str: str):
@@ -200,17 +200,17 @@ class NewsConsumer:
         if self.connection:
             await self.connection.close()
             self.is_connected = False
-            logger.info("🔌 Disconnected from RabbitMQ")
+            logger.info("Disconnected from RabbitMQ")
     
     async def stop(self):
         """Остановка потребителя"""
         self.is_running = False
         await self.disconnect()
-        logger.info("🛑 Consumer stopped")
+        logger.info("Consumer stopped")
 
     def _on_reconnect(self, connection):
         """Callback при автоматическом переподключении"""
-        logger.info("🔄 RabbitMQ connection restored automatically")
+        logger.info("RabbitMQ connection restored automatically")
         self.is_connected = True
 
 # Глобальный экземпляр
