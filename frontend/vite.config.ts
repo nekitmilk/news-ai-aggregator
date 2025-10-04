@@ -11,6 +11,10 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    allowedHosts: [
+      'https://79be9acd1293e8baf0ccf75a67e420dc.serveo.net/',
+      '.serveo.net', // разрешаем все субдомены loca.lt
+    ],
     proxy: {
       '/api': {
         target: 'http://localhost:8000/api/v1',

@@ -1,30 +1,28 @@
 .container {
-  gap: 12px;
-  padding-top: 0;
+  gap: 16px;
   align-items: flex-end;
-  width: 100%;
-  flex-wrap: nowrap;
 }
 
 .datePicker {
-  max-width: 200px;
+  flex: 1;
+  min-width: 200px;
 }
 
 .dateInput {
   background: #ffffff;
   border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
+  height: 42px;
   padding: 8px 12px;
-  padding-right: 40px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
-  border-radius: 8px;
-  width: 100%;
 
   &:hover {
+    border-color: #3182ce;
     box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
   }
+
   &:focus {
     border-color: #3182ce;
     box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
@@ -33,107 +31,37 @@
 }
 
 .label {
-  font-weight: 600;
-  font-size: 15px;
-  color: #1a365d;
   display: flex;
   align-items: center;
   gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #1a365d;
+  margin-bottom: 6px;
 }
 
-/* Стили для dropdown календаря */
+.labelIcon {
+  width: 18px;
+  height: 18px;
+}
+
 .calendarDropdown {
-  border: 1.5px solid #e2e8f0 !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
-  animation: dropdownAppear 0.25s ease-out !important;
-}
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
 
-/* Глобальные стили для календаря Mantine */
-:global(.mantine-DatePicker-month) {
-  background: #ffffff;
-}
-
-:global(.mantine-DatePicker-calendarHeader) {
-  display: grid !important;
-  grid-template-columns: 1fr max-content max-content !important;
-  border-bottom: 1px solid #e2e8f0;
-  padding: 12px;
-  margin-bottom: 8px;
-}
-
-:global(.mantine-DatePicker-calendarHeaderLevel) {
-  order: -1 !important;
-  justify-self: flex-start !important;
-  padding-inline: 16px !important;
-  font-weight: 600 !important;
-  color: #1a365d !important;
-  font-size: 14px !important;
-}
-
-:global(.mantine-DatePicker-calendarHeaderControl) {
-  color: #4a5568 !important;
-  border-radius: 6px !important;
-  transition: all 0.2s ease !important;
-
-  &:hover {
-    background: #ebf5ff !important;
-    color: #3182ce !important;
-  }
-}
-
-:global(.mantine-DatePicker-weekday) {
-  color: #64748b !important;
-  font-weight: 500 !important;
-  font-size: 12px !important;
-}
-
-:global(.mantine-DatePicker-day) {
-  border-radius: 6px !important;
-  font-size: 13px !important;
-  transition: all 0.2s ease !important;
-
-  &:hover:not([data-disabled]) {
-    background: #ebf5ff !important;
+  // Принудительно применяем стили к календарю
+  :global(.mantine-DatePicker-month) {
+    padding: 8px;
   }
 
-  &[data-selected] {
-    background: #3182ce !important;
-    color: white !important;
-  }
+  :global(.mantine-DatePicker-day) {
+    border-radius: 4px;
+    font-size: 13px;
 
-  &[data-in-range] {
-    background: #dbeafe !important;
-  }
-
-  &[data-first-in-range] {
-    background: #3182ce !important;
-    color: white !important;
-  }
-
-  &[data-last-in-range] {
-    background: #3182ce !important;
-    color: white !important;
-  }
-
-  &[data-today] {
-    border: 1px solid #3182ce !important;
-  }
-
-  &[data-disabled] {
-    color: #cbd5e0 !important;
-    background: transparent !important;
-  }
-}
-
-/* Плавная анимация для dropdown */
-@keyframes dropdownAppear {
-  from {
-    opacity: 0;
-    transform: translateY(-2px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+    &:hover {
+      background: #e6f1fc;
+    }
   }
 }
