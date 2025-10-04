@@ -1,6 +1,6 @@
 // NewsBlock.module.scss
 .container {
-  margin-bottom: 20px !important;
+  margin-bottom: 10px !important;
   cursor: pointer !important;
 }
 
@@ -17,7 +17,7 @@
   &:hover {
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
     border-color: #4dabf7 !important;
-    transform: translateY(-2px) !important;
+    transform: translateY(-px) !important;
   }
 }
 
@@ -64,7 +64,9 @@
   font-size: 0.85rem !important;
   font-weight: 500 !important;
 }
-
+.sourceGroup {
+  gap: 8px !important;
+}
 .footer {
   margin-top: 20px !important;
   padding-top: 15px !important;
