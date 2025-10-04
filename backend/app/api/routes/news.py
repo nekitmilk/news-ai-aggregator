@@ -7,11 +7,13 @@ from app import crud
 from app.models import NewsResponse, NewsFilter, ResponseAPI, HTTPErrorResponse
 from .utils import create_success_response
 import uuid
+from dateutil import parser
+from dateutil.tz import tzutc
 
 router = APIRouter(prefix="/news", tags=["news"])
 
 @router.get(
-    "/",
+    "",
     responses={
         200: {"model": ResponseAPI, "description": "News retrieved successfully"},
         500: {"model": HTTPErrorResponse, "description": "Internal server error"}
@@ -38,20 +40,27 @@ def get_news(
         
         if start_date:
             try:
-                start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
-            except ValueError:
+                start_dt = parser.parse(start_date)
+                if start_dt.tzinfo is not None:
+                    start_dt = start_dt.replace(tzinfo=None)
+
+            except Exception as e:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail="Invalid start_date format. Use ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SSZ)"
+                    detail=f"Invalid start_date format: {str(e)}"
                 )
         
         if end_date:
             try:
-                end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
-            except ValueError:
+                end_dt = parser.parse(end_date)
+                if end_dt.hour == 0 and end_dt.minute == 0 and end_dt.second == 0:
+                    end_dt = end_dt.replace(hour=23, minute=59, second=59)
+                if end_dt.tzinfo is not None:
+                    end_dt = end_dt.replace(tzinfo=None)
+            except Exception as e:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail="Invalid end_date format. Use ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SSZ)"
+                    detail=f"Invalid end_date format: {str(e)}"
                 )
         
         filters = NewsFilter(
