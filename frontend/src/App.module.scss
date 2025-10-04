@@ -1,0 +1,93 @@
+.main {
+  min-height: 100vh;
+  width: 100%;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 25%, #dbeafe 50%, #eff6ff 75%, #f0fdfa 100%);
+  background-size: 400% 400%;
+  animation: gentleGradient 20s ease infinite;
+  padding: 0;
+  padding-bottom: 40px;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+      radial-gradient(circle at 10% 20%, rgba(186, 230, 253, 0.4) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(191, 219, 254, 0.3) 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(224, 242, 254, 0.2) 0%, transparent 50%);
+    pointer-events: none;
+  }
+}
+
+.section {
+  margin: 0 auto;
+  width: 1200px;
+  padding: 30px 20px;
+}
+
+.paper {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.filterRow {
+  gap: 16px !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  justify-content: center !important;
+}
+
+.filterItem {
+  width: 100%;
+}
+
+.sortOrderWrapper {
+  flex: 1;
+  align-self: flex-end;
+}
+
+.dateRow {
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.dateContainer {
+  flex: 1;
+  //   max-width: 600px;
+}
+
+.buttonContainer {
+  min-width: 200px;
+  align-self: flex-end;
+}
+
+.emptyState {
+  text-align: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 24px;
+
+  .emptyText {
+    color: #64748b;
+    font-size: 16px;
+  }
+}
+
+.newsList {
+  gap: 16px;
+}
