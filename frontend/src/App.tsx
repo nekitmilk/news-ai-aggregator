@@ -110,7 +110,7 @@ export default function App() {
       start_date: startDate || null,
       end_date: endDate || null,
       page: isLoadMore ? page : 1,
-      limit: 5,
+      limit: 20,
       sort,
     };
 

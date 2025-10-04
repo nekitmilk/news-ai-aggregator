@@ -2,7 +2,6 @@ import { DateInput } from '@mantine/dates';
 import { Group } from '@mantine/core';
 import { IconCalendar, IconCalendarEvent } from '@tabler/icons-react';
 import dayjs from 'dayjs';
-import { useState } from 'react';
 import classes from './DateRangePicker.module.scss';
 import '@mantine/dates/styles.css';
 
@@ -14,42 +13,55 @@ type Props = {
 };
 
 export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange }: Props) {
-  const [startInputValue, setStartInputValue] = useState('');
-  const [endInputValue, setEndInputValue] = useState('');
-  console.log(startInputValue, endInputValue);
-  const handleStartChange = (value: string | null) => {
-    if (value) {
-      // Конвертируем из формата DD.MM.YYYY в YYYY-MM-DD
-      const parsed = dayjs(value, 'DD.MM.YYYY', true);
-      if (parsed.isValid()) {
-        onStartChange(parsed.format('YYYY-MM-DD'));
-      } else {
-        onStartChange('');
-      }
-    } else {
-      onStartChange('');
+  const filterInput = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    const allowedKeys = [
+      '0',
+      '1',
+      '2',
+      '3',
+      '4',
+      '5',
+      '6',
+      '7',
+      '8',
+      '9',
+      '.',
+      'Backspace',
+      'Delete',
+      'Tab',
+      'ArrowLeft',
+      'ArrowRight',
+      'ArrowUp',
+      'ArrowDown',
+    ];
+
+    if (!allowedKeys.includes(event.key)) {
+      event.preventDefault();
     }
   };
 
-  const handleEndChange = (value: string | null) => {
-    if (value) {
-      // Конвертируем из формата DD.MM.YYYY в YYYY-MM-DD
-      const parsed = dayjs(value, 'DD.MM.YYYY', true);
-      if (parsed.isValid()) {
-        onEndChange(parsed.format('YYYY-MM-DD'));
-      } else {
-        onEndChange('');
+  const getDateValue = (dateString: string | undefined): Date | null => {
+    if (!dateString) return null;
+
+    if (dateString.includes('.')) {
+      const [day, month, year] = dateString.split('.');
+      if (day && month && year) {
+        const date = new Date(`${year}-${month}-${day}`);
+        return isNaN(date.getTime()) ? null : date;
       }
-    } else {
-      onEndChange('');
     }
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? null : date;
   };
 
-  // Конвертируем YYYY-MM-DD в DD.MM.YYYY для отображения
-  const formatForDisplay = (dateString: string | undefined) => {
-    if (!dateString) return '';
-    const date = dayjs(dateString, 'YYYY-MM-DD');
-    return date.isValid() ? date.format('DD.MM.YYYY') : '';
+  const getMinDate = (): Date | undefined => {
+    if (!startDate) return undefined;
+    return getDateValue(startDate) || undefined;
+  };
+
+  const getMaxDate = (): Date | undefined => {
+    if (!endDate) return undefined;
+    return getDateValue(endDate) || undefined;
   };
 
   return (
@@ -61,72 +73,34 @@ export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange
             Начальная дата
           </div>
         }
-        placeholder="Выберите дату..."
-        value={formatForDisplay(startDate)}
-        onChange={handleStartChange}
-        onInput={(event) => {
-          const value = event.currentTarget.value;
-          setStartInputValue(value);
-          if (value === '') {
+        placeholder="дд.мм.гггг"
+        value={getDateValue(startDate)}
+        onChange={(date) => {
+          if (date) {
+            const formatted = dayjs(date).format('DD.MM.YYYY');
+            onStartChange(formatted);
+          } else {
             onStartChange('');
           }
         }}
+        onKeyDown={filterInput}
         radius="md"
         valueFormat="DD.MM.YYYY"
         locale="ru"
-        clearable
         classNames={{
           root: classes.datePicker,
           input: classes.dateInput,
           label: classes.label,
-          month: classes.month,
-        }}
-        allowDeselect
-        inputWrapperOrder={['label', 'input', 'error']}
-        onKeyDown={(e) => {
-          if (!/[\d\.]|Backspace|Delete|Tab|ArrowLeft|ArrowRight|ArrowUp|ArrowDown/.test(e.key)) {
-            e.preventDefault();
-          }
-        }}
-        onPaste={(e) => {
-          e.preventDefault();
-        }}
-        styles={{
-          day: {
-            '&[data-selected], &[data-selected]:hover': {
-              backgroundColor: '#3182ce',
-              color: 'white',
-            },
-            '&[data-in-range], &[data-in-range]:hover': {
-              backgroundColor: '#3182ce',
-              color: 'white',
-              opacity: '0.5',
-            },
-            '&[data-first-in-range], &[data-first-in-range]:hover': {
-              backgroundColor: '#3182ce',
-              color: 'white',
-              opacity: '1',
-            },
-            '&[data-last-in-range], &[data-last-in-range]:hover': {
-              backgroundColor: '#3182ce',
-              color: 'white',
-              opacity: '1',
-            },
-          },
-          input: {
-            '&:focus': {
-              borderColor: '#3182ce',
-            },
-          },
+          day: classes.day,
         }}
         popoverProps={{
           classNames: {
             dropdown: classes.calendarDropdown,
           },
-          transitionProps: {
-            duration: 0,
-          },
         }}
+        maxDate={getMaxDate()}
+        allowDeselect
+        clearable
       />
       <DateInput
         label={
@@ -135,73 +109,34 @@ export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange
             Конечная дата
           </div>
         }
-        placeholder="Выберите дату..."
-        value={formatForDisplay(endDate)}
-        onChange={handleEndChange}
-        onInput={(event) => {
-          const value = event.currentTarget.value;
-          setEndInputValue(value);
-          if (value === '') {
+        placeholder="дд.мм.гггг"
+        value={getDateValue(endDate)}
+        onChange={(date) => {
+          if (date) {
+            const formatted = dayjs(date).format('DD.MM.YYYY');
+            onEndChange(formatted);
+          } else {
             onEndChange('');
           }
         }}
+        onKeyDown={filterInput}
         radius="md"
         valueFormat="DD.MM.YYYY"
         locale="ru"
-        clearable
         classNames={{
           root: classes.datePicker,
           input: classes.dateInput,
           label: classes.label,
-          month: classes.month,
-        }}
-        allowDeselect
-        inputWrapperOrder={['label', 'input', 'error']}
-        onKeyDown={(e) => {
-          if (!/[\d\.]|Backspace|Delete|Tab|ArrowLeft|ArrowRight|ArrowUp|ArrowDown/.test(e.key)) {
-            e.preventDefault();
-          }
-        }}
-        onPaste={(e) => {
-          e.preventDefault();
-        }}
-        styles={{
-          day: {
-            '&[data-selected], &[data-selected]:hover': {
-              backgroundColor: '#3182ce',
-              color: 'white',
-            },
-            '&[data-in-range], &[data-in-range]:hover': {
-              backgroundColor: '#3182ce',
-              color: 'white',
-              opacity: '0.5',
-            },
-            '&[data-first-in-range], &[data-first-in-range]:hover': {
-              backgroundColor: '#3182ce',
-              color: 'white',
-              opacity: '1',
-            },
-            '&[data-last-in-range], &[data-last-in-range]:hover': {
-              backgroundColor: '#3182ce',
-              color: 'white',
-              opacity: '1',
-            },
-          },
-          input: {
-            '&:focus': {
-              borderColor: '#3182ce',
-            },
-          },
+          day: classes.day,
         }}
         popoverProps={{
           classNames: {
             dropdown: classes.calendarDropdown,
           },
-          transitionProps: {
-            duration: 0,
-          },
         }}
-        minDate={startDate ? dayjs(startDate).toDate() : undefined}
+        minDate={getMinDate()}
+        allowDeselect
+        clearable
       />
     </Group>
   );
