@@ -6,7 +6,10 @@ from urllib.parse import urlparse
 import aio_pika
 from aio_pika.abc import AbstractIncomingMessage
 from sqlmodel import Session, select
+
 from datetime import datetime
+from dateutil import parser
+import pytz
 
 from app.core.config import settings
 from app.core.db import engine
@@ -21,6 +24,7 @@ class NewsConsumer:
         self.is_connected = False
         self.reconnect_delay = settings.RABBITMQ_RECONNECT_DELAY  # seconds
         self.is_running = True
+        self.timezone = pytz.timezone(settings.TIMEZONE)
     
     async def connect(self):
         """Простое подключение к RabbitMQ"""
@@ -29,6 +33,7 @@ class NewsConsumer:
                 settings.RABBITMQ_URL,
                 timeout=10
             )
+            self.connection.reconnect_callbacks.add(self._on_reconnect)
             self.channel = await self.connection.channel()
             await self.channel.set_qos(prefetch_count=10)
             
@@ -103,9 +108,11 @@ class NewsConsumer:
             with Session(engine) as session:
                 title = news_data.get("title", "").strip()
 
-                published_date = news_data.get("published_date", "")
-                if not published_date:
-                    published_date = datetime.now()
+                published_date_str = news_data.get("published_date", "")
+                if not published_date_str:
+                    published_date = datetime.now(self.timezone).replace(tzinfo=None)
+                else:
+                    published_date = await self.parse_published_date(published_date_str)
 
                 summary=news_data.get("summary", "").strip()
                 
@@ -177,6 +184,17 @@ class NewsConsumer:
             logger.info(f"📝 Created category: {name}")
         return category
     
+    async def parse_published_date(self, date_str: str):
+        """Парсит строку даты в datetime с правильным часовым поясом"""
+        try:
+            from dateutil import parser
+            parsed_date = parser.parse(date_str)
+            return parsed_date
+            
+        except Exception as e:
+            logger.warning(f"Failed to parse date '{date_str}': {e}, using current date")
+            return datetime.now(self.timezone).replace(tzinfo=None)
+    
     async def disconnect(self):
         """Корректное отключение"""
         if self.connection:
@@ -189,6 +207,11 @@ class NewsConsumer:
         self.is_running = False
         await self.disconnect()
         logger.info("🛑 Consumer stopped")
+
+    def _on_reconnect(self, connection):
+        """Callback при автоматическом переподключении"""
+        logger.info("🔄 RabbitMQ connection restored automatically")
+        self.is_connected = True
 
 # Глобальный экземпляр
 news_consumer = NewsConsumer()

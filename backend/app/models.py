@@ -208,16 +208,17 @@ class NewsResponse(SQLModel):
     category: str 
     source: str
     url: str
-    date: str  # Дата публикации в формате "dd:mm:YYYY"
+    date: str  # Дата публикации в формате "dd.mm.YYYY"
 
 class NewsListResponse(ResponseAPI):
     result: List[NewsResponse]
 
 class NewsFilter(BaseModel):
-    category: Optional[str] = None
-    source: Optional[str] = None
+    category_ids: Optional[List[uuid.UUID]] = None
+    source_ids: Optional[List[uuid.UUID]] = None
     search: Optional[str] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     page: int = 1
     limit: int = 20
+    sort_order: str = "desc"
