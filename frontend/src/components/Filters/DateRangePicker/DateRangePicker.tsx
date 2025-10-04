@@ -25,7 +25,8 @@ export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange
       '7',
       '8',
       '9',
-      '.',
+      '.', 
+      '-', 
       'Backspace',
       'Delete',
       'Tab',
@@ -43,8 +44,9 @@ export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange
   const getDateValue = (dateString: string | undefined): Date | null => {
     if (!dateString) return null;
 
-    if (dateString.includes('.')) {
-      const [day, month, year] = dateString.split('.');
+    if (dateString.includes('-') || dateString.includes('.')) {
+      const separator = dateString.includes('-') ? '-' : '.';
+      const [day, month, year] = dateString.split(separator);
       if (day && month && year) {
         const date = new Date(`${year}-${month}-${day}`);
         return isNaN(date.getTime()) ? null : date;
@@ -73,11 +75,11 @@ export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange
             Начальная дата
           </div>
         }
-        placeholder="дд.мм.гггг"
+        placeholder="дд.мм.гггг" 
         value={getDateValue(startDate)}
         onChange={(date) => {
           if (date) {
-            const formatted = dayjs(date).format('DD.MM.YYYY');
+            const formatted = dayjs(date).format('DD-MM-YYYY');
             onStartChange(formatted);
           } else {
             onStartChange('');
@@ -85,7 +87,7 @@ export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange
         }}
         onKeyDown={filterInput}
         radius="md"
-        valueFormat="DD.MM.YYYY"
+        valueFormat="DD.MM.YYYY" 
         locale="ru"
         classNames={{
           root: classes.datePicker,
@@ -109,11 +111,11 @@ export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange
             Конечная дата
           </div>
         }
-        placeholder="дд.мм.гггг"
+        placeholder="дд.мм.гггг" 
         value={getDateValue(endDate)}
         onChange={(date) => {
           if (date) {
-            const formatted = dayjs(date).format('DD.MM.YYYY');
+            const formatted = dayjs(date).format('DD-MM-YYYY');
             onEndChange(formatted);
           } else {
             onEndChange('');
@@ -121,7 +123,7 @@ export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange
         }}
         onKeyDown={filterInput}
         radius="md"
-        valueFormat="DD.MM.YYYY"
+        valueFormat="DD.MM.YYYY" 
         locale="ru"
         classNames={{
           root: classes.datePicker,

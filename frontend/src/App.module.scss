@@ -194,3 +194,31 @@
 .newsList {
   gap: 16px;
 }
+.loadingState {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: transparent;
+}
+
+.loadingText {
+  color: #666;
+  font-size: 16px;
+}
+
+.endState {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: transparent;
+  border-top: 1px solid #e0e0e0;
+  margin-top: 20px;
+}
+
+.endText {
+  color: #999;
+  font-size: 14px;
+  font-style: italic;
+}

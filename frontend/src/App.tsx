@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { MantineProvider, Group, Stack, Paper, AppShell } from '@mantine/core';
 import { CategoryPicker } from './components/Filters/CategoryPicker/CategoryPicker';
 import { SourcePicker } from './components/Filters/SourcePicker/SourcePicker';
@@ -56,6 +56,7 @@ export default function App() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<ITelegramUser | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -88,9 +89,6 @@ export default function App() {
     setShowAuthModal(false);
 
     console.log('User authenticated with ID:', userData.id);
-
-    // Можно отправить данные на сервер для проверки
-    // verifyOnServer(userData);
   };
 
   const handleLogout = () => {
@@ -100,7 +98,7 @@ export default function App() {
   };
 
   async function getNews(isLoadMore = false) {
-    if (loading) return;
+    if (loading || (isLoadMore && !hasMore)) return;
 
     setLoading(true);
     const filters = {
@@ -113,15 +111,22 @@ export default function App() {
       limit: 20,
       sort,
     };
-
+    console.log(JSON.stringify(filters));
     try {
       const newNews = await fetchNews(filters);
+
+      if (newNews.length < 20) {
+        setHasMore(false);
+      } else {
+        setHasMore(true);
+      }
 
       if (isLoadMore) {
         setNews((prev) => [...prev, ...newNews]);
       } else {
         setNews(newNews);
         setPage(1);
+        setHasMore(true);
       }
     } catch (error) {
       console.error('Error fetching news:', error);
@@ -134,6 +139,23 @@ export default function App() {
     setPage(1);
     getNews(false);
   }
+
+  const handleScroll = useCallback(() => {
+    if (loading || !hasMore) return;
+
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
+
+    if (documentHeight - (scrollTop + windowHeight) < 200) {
+      setPage((prev) => prev + 1);
+    }
+  }, [loading, hasMore]);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   useEffect(() => {
     if (page > 1) {
@@ -224,9 +246,21 @@ export default function App() {
                 />
               ))}
 
+              {loading && (
+                <Paper className={classes.loadingState}>
+                  <div className={classes.loadingText}>Загрузка новостей...</div>
+                </Paper>
+              )}
+
               {news.length === 0 && !loading && (
                 <Paper className={classes.emptyState}>
                   <div className={classes.emptyText}>Новости не найдены. Измените параметры фильтрации.</div>
+                </Paper>
+              )}
+
+              {!hasMore && news.length > 0 && (
+                <Paper className={classes.endState}>
+                  <div className={classes.endText}>Вы просмотрели все новости</div>
                 </Paper>
               )}
             </Stack>
