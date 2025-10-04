@@ -108,7 +108,7 @@ class NewsConsumer:
             with Session(engine) as session:
                 title = news_data.get("title", "").strip()
 
-                published_date_str = news_data.get("published_date", "")
+                published_date_str = news_data.get("date", "")
                 if not published_date_str:
                     published_date = datetime.now(self.timezone).replace(tzinfo=None)
                 else:
@@ -128,7 +128,7 @@ class NewsConsumer:
                     logger.info(f"News already exists: {title}")
                     return
                 
-                source_name = news_data.get("source_name", "Unknown Source").strip()
+                source_name = news_data.get("source", "Unknown Source").strip()
                 source_url = news_data.get("url", "").strip()
                 source_domain = self.extract_domain(source_url)
                 
