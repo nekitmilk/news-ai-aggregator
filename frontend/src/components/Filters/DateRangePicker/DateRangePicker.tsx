@@ -2,6 +2,7 @@ import { DateInput } from '@mantine/dates';
 import { Group } from '@mantine/core';
 import { IconCalendar, IconCalendarEvent } from '@tabler/icons-react';
 import dayjs from 'dayjs';
+import { useState } from 'react';
 import classes from './DateRangePicker.module.scss';
 import '@mantine/dates/styles.css';
 
@@ -13,111 +14,194 @@ type Props = {
 };
 
 export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange }: Props) {
-  const handleDateChange = (date: Date | null, isStartDate: boolean) => {
-    const changeHandler = isStartDate ? onStartChange : onEndChange;
-    // Просто передаем пустую строку или null, без форматирования
-    changeHandler(date ? '' : '');
-  };
-
-  const dateParser = (value: string) => {
-    if (!value || value.trim() === '') {
-      return null;
-    }
-    const parsed = dayjs(value, 'DD.MM.YYYY', true);
-    return parsed.isValid() && parsed.year() > 1900 ? parsed.toDate() : null;
-  };
-
-  // Конвертируем строку в Date для value пропса
-  const parseStringToDate = (dateString?: string): Date | null => {
-    if (!dateString) return null;
-    const parsed = dayjs(dateString, 'YYYY-MM-DD', true);
-    return parsed.isValid() ? parsed.toDate() : null;
-  };
-
-  const sharedProps = {
-    radius: 'md' as const,
-    valueFormat: 'DD.MM.YYYY' as const,
-    locale: 'ru' as const,
-    clearable: true,
-    allowDeselect: false,
-    inputWrapperOrder: ['label', 'input', 'error'] as const,
-    classNames: {
-      root: classes.datePicker,
-      input: classes.dateInput,
-      label: classes.label,
-    },
-    styles: {
-      day: {
-        '&[data-selected], &[data-selected]:hover': {
-          backgroundColor: '#3182ce',
-          color: 'white',
-        },
-        '&[data-in-range], &[data-in-range]:hover': {
-          backgroundColor: '#3182ce',
-          color: 'white',
-          opacity: 0.5,
-        },
-        '&[data-first-in-range], &[data-first-in-range]:hover': {
-          backgroundColor: '#3182ce',
-          color: 'white',
-          opacity: 1,
-        },
-        '&[data-last-in-range], &[data-last-in-range]:hover': {
-          backgroundColor: '#3182ce',
-          color: 'white',
-          opacity: 1,
-        },
-      },
-      input: {
-        '&:focus': {
-          borderColor: '#3182ce',
-        },
-      },
-    },
-    popoverProps: {
-      classNames: {
-        dropdown: classes.calendarDropdown,
-      },
-      transitionProps: { duration: 0 },
-    },
-    dateParser,
-    onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (!/[\d.]|Backspace|Delete|Tab|ArrowLeft|ArrowRight|ArrowUp|ArrowDown/.test(e.key)) {
-        e.preventDefault();
+  const [startInputValue, setStartInputValue] = useState('');
+  const [endInputValue, setEndInputValue] = useState('');
+  console.log(startInputValue, endInputValue);
+  const handleStartChange = (value: string | null) => {
+    if (value) {
+      // Конвертируем из формата DD.MM.YYYY в YYYY-MM-DD
+      const parsed = dayjs(value, 'DD.MM.YYYY', true);
+      if (parsed.isValid()) {
+        onStartChange(parsed.format('YYYY-MM-DD'));
+      } else {
+        onStartChange('');
       }
-    },
-    onPaste: (e: React.ClipboardEvent<HTMLInputElement>) => {
-      e.preventDefault();
-    },
+    } else {
+      onStartChange('');
+    }
+  };
+
+  const handleEndChange = (value: string | null) => {
+    if (value) {
+      // Конвертируем из формата DD.MM.YYYY в YYYY-MM-DD
+      const parsed = dayjs(value, 'DD.MM.YYYY', true);
+      if (parsed.isValid()) {
+        onEndChange(parsed.format('YYYY-MM-DD'));
+      } else {
+        onEndChange('');
+      }
+    } else {
+      onEndChange('');
+    }
+  };
+
+  // Конвертируем YYYY-MM-DD в DD.MM.YYYY для отображения
+  const formatForDisplay = (dateString: string | undefined) => {
+    if (!dateString) return '';
+    const date = dayjs(dateString, 'YYYY-MM-DD');
+    return date.isValid() ? date.format('DD.MM.YYYY') : '';
   };
 
   return (
     <Group className={classes.container}>
       <DateInput
-        {...sharedProps}
         label={
           <div className={classes.label}>
-            <IconCalendar className={classes.labelIcon} />
+            <IconCalendar style={{ width: 20, height: 20 }} />
             Начальная дата
           </div>
         }
         placeholder="Выберите дату..."
-        value={parseStringToDate(startDate)}
-        onChange={(date) => handleDateChange(date, true)}
+        value={formatForDisplay(startDate)}
+        onChange={handleStartChange}
+        onInput={(event) => {
+          const value = event.currentTarget.value;
+          setStartInputValue(value);
+          if (value === '') {
+            onStartChange('');
+          }
+        }}
+        radius="md"
+        valueFormat="DD.MM.YYYY"
+        locale="ru"
+        clearable
+        classNames={{
+          root: classes.datePicker,
+          input: classes.dateInput,
+          label: classes.label,
+          month: classes.month,
+        }}
+        allowDeselect
+        inputWrapperOrder={['label', 'input', 'error']}
+        onKeyDown={(e) => {
+          if (!/[\d\.]|Backspace|Delete|Tab|ArrowLeft|ArrowRight|ArrowUp|ArrowDown/.test(e.key)) {
+            e.preventDefault();
+          }
+        }}
+        onPaste={(e) => {
+          e.preventDefault();
+        }}
+        styles={{
+          day: {
+            '&[data-selected], &[data-selected]:hover': {
+              backgroundColor: '#3182ce',
+              color: 'white',
+            },
+            '&[data-in-range], &[data-in-range]:hover': {
+              backgroundColor: '#3182ce',
+              color: 'white',
+              opacity: '0.5',
+            },
+            '&[data-first-in-range], &[data-first-in-range]:hover': {
+              backgroundColor: '#3182ce',
+              color: 'white',
+              opacity: '1',
+            },
+            '&[data-last-in-range], &[data-last-in-range]:hover': {
+              backgroundColor: '#3182ce',
+              color: 'white',
+              opacity: '1',
+            },
+          },
+          input: {
+            '&:focus': {
+              borderColor: '#3182ce',
+            },
+          },
+        }}
+        popoverProps={{
+          classNames: {
+            dropdown: classes.calendarDropdown,
+          },
+          transitionProps: {
+            duration: 0,
+          },
+        }}
       />
-
       <DateInput
-        {...sharedProps}
         label={
           <div className={classes.label}>
-            <IconCalendarEvent className={classes.labelIcon} />
+            <IconCalendarEvent style={{ width: 20, height: 20 }} />
             Конечная дата
           </div>
         }
         placeholder="Выберите дату..."
-        value={parseStringToDate(endDate)}
-        onChange={(date) => handleDateChange(date, false)}
-        minDate={parseStringToDate(startDate) || undefined}
+        value={formatForDisplay(endDate)}
+        onChange={handleEndChange}
+        onInput={(event) => {
+          const value = event.currentTarget.value;
+          setEndInputValue(value);
+          if (value === '') {
+            onEndChange('');
+          }
+        }}
+        radius="md"
+        valueFormat="DD.MM.YYYY"
+        locale="ru"
+        clearable
+        classNames={{
+          root: classes.datePicker,
+          input: classes.dateInput,
+          label: classes.label,
+          month: classes.month,
+        }}
+        allowDeselect
+        inputWrapperOrder={['label', 'input', 'error']}
+        onKeyDown={(e) => {
+          if (!/[\d\.]|Backspace|Delete|Tab|ArrowLeft|ArrowRight|ArrowUp|ArrowDown/.test(e.key)) {
+            e.preventDefault();
+          }
+        }}
+        onPaste={(e) => {
+          e.preventDefault();
+        }}
+        styles={{
+          day: {
+            '&[data-selected], &[data-selected]:hover': {
+              backgroundColor: '#3182ce',
+              color: 'white',
+            },
+            '&[data-in-range], &[data-in-range]:hover': {
+              backgroundColor: '#3182ce',
+              color: 'white',
+              opacity: '0.5',
+            },
+            '&[data-first-in-range], &[data-first-in-range]:hover': {
+              backgroundColor: '#3182ce',
+              color: 'white',
+              opacity: '1',
+            },
+            '&[data-last-in-range], &[data-last-in-range]:hover': {
+              backgroundColor: '#3182ce',
+              color: 'white',
+              opacity: '1',
+            },
+          },
+          input: {
+            '&:focus': {
+              borderColor: '#3182ce',
+            },
+          },
+        }}
+        popoverProps={{
+          classNames: {
+            dropdown: classes.calendarDropdown,
+          },
+          transitionProps: {
+            duration: 0,
+          },
+        }}
+        minDate={startDate ? dayjs(startDate).toDate() : undefined}
       />
     </Group>
   );
