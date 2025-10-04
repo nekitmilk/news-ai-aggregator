@@ -19,41 +19,19 @@ router = APIRouter(prefix="/news", tags=["news"])
 )
 def get_news(
     session: SessionDep,
-    category_ids: Optional[str] = Query(None, description="Comma-separated category UUIDs"),
-    source_ids: Optional[str] = Query(None, description="Comma-separated source UUIDs"),
+    category: Optional[List[uuid.UUID]] = Query(None, alias="category[]", description="Array of category UUIDs"),
+    source: Optional[List[uuid.UUID]] = Query(None, alias="source[]", description="Array of source UUIDs"),
     search: Optional[str] = Query(None),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None), 
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
-    sort_order: str = Query("desc", regex="^(asc|desc)$"),
+    sort: str = Query("desc", regex="^(asc|desc)$"),
 ):
     """
     Get news with filters
     """
     try:
-        # Парсим массивы ID из строк
-        parsed_category_ids = None
-        parsed_source_ids = None
-        
-        if category_ids:
-            try:
-                parsed_category_ids = [uuid.UUID(cid.strip()) for cid in category_ids.split(",")]
-            except ValueError:
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail="Invalid category IDs format. Use comma-separated UUIDs"
-                )
-        
-        if source_ids:
-            try:
-                parsed_source_ids = [uuid.UUID(sid.strip()) for sid in source_ids.split(",")]
-            except ValueError:
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail="Invalid source IDs format. Use comma-separated UUIDs"
-                )
-        
         # Конвертируем даты
         start_dt = None
         end_dt = None
@@ -77,14 +55,14 @@ def get_news(
                 )
         
         filters = NewsFilter(
-            category_ids=parsed_category_ids,
-            source_ids=parsed_source_ids, 
+            category_ids=category,  # Уже список UUID
+            source_ids=source,      # Уже список UUID
             search=search,
             start_date=start_dt,
             end_date=end_dt,
             page=page,
             limit=limit,
-            sort_order=sort_order
+            sort_order=sort
         )
         
         news_items = crud.get_news_with_filters(session, filters)
@@ -99,7 +77,7 @@ def get_news(
                 category=item.category.name,
                 source=item.source.name,
                 url=item.url,
-                date=item.published_at.strftime("%d:%m:%Y") if item.published_at else ""
+                date=item.published_at.strftime("%d.%m.%Y") if item.published_at else ""
             ))
         
         return create_success_response(
