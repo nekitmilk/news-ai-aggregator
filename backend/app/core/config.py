@@ -98,6 +98,7 @@ class Settings(BaseSettings):
     RABBITMQ_PROCESSED_NEWS_QUEUE: str = "processed_news"
     RABBITMQ_RAW_NEWS_QUEUE: str = "raw_news"
     RABBITMQ_RECONNECT_DELAY: int = 5
+    TIMEZONE: str = "Europe/Moscow"
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":

@@ -6,6 +6,7 @@ from app.api.deps import SessionDep
 from app import crud
 from app.models import NewsResponse, NewsFilter, ResponseAPI, HTTPErrorResponse
 from .utils import create_success_response
+import uuid
 
 router = APIRouter(prefix="/news", tags=["news"])
 
@@ -18,53 +19,77 @@ router = APIRouter(prefix="/news", tags=["news"])
 )
 def get_news(
     session: SessionDep,
-    category: Optional[str] = Query(None),
-    source: Optional[str] = Query(None),
+    category_ids: Optional[str] = Query(None, description="Comma-separated category UUIDs"),
+    source_ids: Optional[str] = Query(None, description="Comma-separated source UUIDs"),
     search: Optional[str] = Query(None),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None), 
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
+    sort_order: str = Query("desc", regex="^(asc|desc)$"),
 ):
     """
     Get news with filters
     """
     try:
-        # Convert string dates to datetime if provided
+        # Парсим массивы ID из строк
+        parsed_category_ids = None
+        parsed_source_ids = None
+        
+        if category_ids:
+            try:
+                parsed_category_ids = [uuid.UUID(cid.strip()) for cid in category_ids.split(",")]
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Invalid category IDs format. Use comma-separated UUIDs"
+                )
+        
+        if source_ids:
+            try:
+                parsed_source_ids = [uuid.UUID(sid.strip()) for sid in source_ids.split(",")]
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Invalid source IDs format. Use comma-separated UUIDs"
+                )
+        
+        # Конвертируем даты
         start_dt = None
         end_dt = None
         
         if start_date:
             try:
-                start_dt = datetime.fromisoformat(start_date)
+                start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
             except ValueError:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail="Invalid start_date format. Use ISO format (YYYY-MM-DD)"
+                    detail="Invalid start_date format. Use ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SSZ)"
                 )
         
         if end_date:
             try:
-                end_dt = datetime.fromisoformat(end_date)
+                end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
             except ValueError:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail="Invalid end_date format. Use ISO format (YYYY-MM-DD)"
+                    detail="Invalid end_date format. Use ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SSZ)"
                 )
         
         filters = NewsFilter(
-            category=category,
-            source=source, 
+            category_ids=parsed_category_ids,
+            source_ids=parsed_source_ids, 
             search=search,
             start_date=start_dt,
             end_date=end_dt,
             page=page,
-            limit=limit
+            limit=limit,
+            sort_order=sort_order
         )
         
         news_items = crud.get_news_with_filters(session, filters)
         
-        # Convert to response format
+        # Конвертируем в формат ответа
         result = []
         for item in news_items:
             result.append(NewsResponse(
@@ -83,7 +108,6 @@ def get_news(
         )
         
     except HTTPException:
-        # Re-raise already handled HTTP exceptions
         raise
     except Exception as e:
         raise HTTPException(
