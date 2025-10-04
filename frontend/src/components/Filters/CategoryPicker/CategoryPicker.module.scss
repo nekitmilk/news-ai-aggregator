@@ -1,6 +1,5 @@
 .root {
   width: 100%;
-  transition: all 0.3s ease;
 }
 
 .label {
@@ -87,7 +86,7 @@
   animation: gentleScale 0.2s ease;
   text-align: center;
   > span {
-    line-height: 1.5;
+    line-height: 1.6;
   }
 }
 
@@ -107,7 +106,6 @@
   transition: transform 0.3s ease;
 }
 
-/* Плавные анимации */
 @keyframes dropdownAppear {
   from {
     opacity: 0;
