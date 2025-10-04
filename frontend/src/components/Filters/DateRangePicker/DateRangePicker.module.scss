@@ -19,7 +19,6 @@
   transition: all 0.3s ease;
 
   &:hover {
-    border-color: #3182ce;
     box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
   }
 
@@ -37,7 +36,6 @@
   font-weight: 600;
   font-size: 14px;
   color: #1a365d;
-  margin-bottom: 6px;
 }
 
 .labelIcon {
@@ -46,22 +44,55 @@
 }
 
 .calendarDropdown {
-  border: 1.5px solid #e2e8f0;
+  border: 1px solid #e0e0e0;
   border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+}
 
-  // Принудительно применяем стили к календарю
-  :global(.mantine-DatePicker-month) {
-    padding: 8px;
+.month {
+  padding: 8px;
+}
+
+.day {
+  border-radius: 4px;
+  &[data-weekend] {
+    color: #fa5252;
+
+    &[data-selected] {
+      background-color: #fa5252;
+      color: white;
+      &:hover {
+        background-color: #cb4242;
+      }
+    }
+
+    &:hover:not([data-selected]) {
+      background-color: #ffe3e3 !important;
+    }
   }
 
-  :global(.mantine-DatePicker-day) {
-    border-radius: 4px;
-    font-size: 13px;
+  &[data-selected]:not([data-weekend]) {
+    background-color: #228be6;
+    color: white;
 
     &:hover {
-      background: #e6f1fc;
+      background-color: #1668b0;
     }
+  }
+
+  &:hover:not([data-selected]):not([data-weekend]) {
+    background-color: #e1e1e1 !important;
+  }
+
+  &[data-outside] {
+    color: #ced4da;
+
+    &[data-weekend] {
+      background-color: #fffafa;
+      color: #e9acac;
+    }
+  }
+  &[data-in-range] {
+    background-color: #e7f5ff;
   }
 }
