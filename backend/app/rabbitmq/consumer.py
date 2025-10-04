@@ -115,14 +115,14 @@ class NewsConsumer:
                 
                 # Проверяем дубликат по URL
                 existing = session.exec(
-                    select(ProcessedNews).where(ProcessedNews.url == news_data.get("source_url", ""))
+                    select(ProcessedNews).where(ProcessedNews.url == news_data.get("url", ""))
                 ).first()
                 if existing:
                     logger.info(f"⚠️ News already exists: {title}")
                     return
                 
                 source_name = news_data.get("source_name", "Unknown Source").strip()
-                source_url = news_data.get("source_url", "").strip()
+                source_url = news_data.get("url", "").strip()
                 source_domain = self.extract_domain(source_url)
                 
                 source = await self.get_or_create_source(session, source_name, source_domain)
