@@ -1,3 +1,82 @@
+.header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.headerContainer {
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.logoText {
+  background: linear-gradient(135deg, #3182ce 0%, #2c5aa0 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.authOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.authModal {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.authHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+
+  h3 {
+    margin: 0;
+    color: #333;
+  }
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+
+  &:hover {
+    color: #333;
+  }
+}
+
+.widgetContainer {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.authHint {
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+  margin-top: 16px;
+}
+
 .main {
   min-height: 100vh;
   width: 100%;
@@ -23,25 +102,45 @@
   }
 }
 
+.main {
+  min-height: calc(100vh - 70px); // Учитываем высоту хедера
+  width: 100%;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 25%, #dbeafe 50%, #eff6ff 75%, #f0fdfa 100%);
+  background-size: 400% 400%;
+  animation: gentleGradient 20s ease infinite;
+  padding: 0;
+  padding-bottom: 40px;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+      radial-gradient(circle at 10% 20%, rgba(186, 230, 253, 0.4) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(191, 219, 254, 0.3) 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(224, 242, 254, 0.2) 0%, transparent 50%);
+    pointer-events: none;
+  }
+}
 .section {
   margin: 0 auto;
   width: 1200px;
-  padding: 30px 20px;
+  padding: 20px 20px;
 }
 
 .paper {
-  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 24px;
-  margin-bottom: 24px;
+  margin-bottom: 40px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
-
-  &:hover {
-    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
-  }
 }
 
 .filterRow {
@@ -68,12 +167,16 @@
 
 .dateContainer {
   flex: 1;
+  align-self: end;
   //   max-width: 600px;
 }
 
 .buttonContainer {
   min-width: 200px;
   align-self: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .emptyState {
