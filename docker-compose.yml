@@ -227,6 +227,21 @@ services:
               count: all
               capabilities: [ gpu ]
     runtime: nvidia
+  bot:
+    build:
+      context: ./tgbot
+      dockerfile: Dockerfile
+    container_name: news_bot
+    restart: always
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - BOT_TOKEN=8211185145:AAFn9NGTL51sntgmZCryXhqqJ_9NKcHtoYo
+      - API_URL=http://backend:8000/api/v1
+    networks:
+      - default
+    command: ["python", "bot.py"]
 
 volumes:
   app-db-data:
