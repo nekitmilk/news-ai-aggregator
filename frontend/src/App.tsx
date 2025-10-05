@@ -66,36 +66,49 @@ export default function App() {
     checkAuth();
   }, []);
 
-  const checkAuth = () => {
+  const checkAuth = useCallback(() => {
     const savedUser = localStorage.getItem('telegram_user');
     if (savedUser) {
-      const userData = JSON.parse(savedUser);
-      setIsAuthenticated(true);
-      setUser(userData);
+      try {
+        const userData = JSON.parse(savedUser);
+        setIsAuthenticated(true);
+        setUser(userData);
+        console.log('User restored from localStorage:', userData);
+      } catch (error) {
+        console.error('Error parsing saved user data:', error);
+        localStorage.removeItem('telegram_user');
+      }
     }
-  };
+  }, []);
 
-  const handleTelegramAuth = () => {
+  const handleTelegramClick = useCallback(() => {
     setShowAuthModal(true);
-  };
+  }, []);
 
-  const handleAuthSuccess = (userData: ITelegramUser) => {
+  const handleAuthSuccess = useCallback((userData: ITelegramUser) => {
+    console.log('Auth success:', userData);
+
     // Сохраняем в localStorage
-    console.log(userData);
     localStorage.setItem('telegram_user', JSON.stringify(userData));
 
-    setIsAuthenticated(true);
+    // Обновляем состояние
     setUser(userData);
+    setIsAuthenticated(true);
     setShowAuthModal(false);
 
     console.log('User authenticated with ID:', userData.id);
-  };
+  }, []);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     localStorage.removeItem('telegram_user');
     setIsAuthenticated(false);
     setUser(null);
-  };
+    console.log('User logged out');
+  }, []);
+
+  const handleCloseAuthModal = useCallback(() => {
+    setShowAuthModal(false);
+  }, []);
 
   async function getNews(isLoadMore = false) {
     if (loading || (isLoadMore && !hasMore)) return;
@@ -183,7 +196,7 @@ export default function App() {
       <AppShell header={{ height: 70 }}>
         <AppShell.Header>
           <Header
-            onTelegramClick={handleTelegramAuth}
+            onTelegramClick={handleTelegramClick}
             isAuthenticated={isAuthenticated}
             user={user}
             onLogout={handleLogout}
@@ -194,7 +207,7 @@ export default function App() {
           {/* Модальное окно авторизации */}
           <TelegramAuthModal
             isOpen={showAuthModal}
-            onClose={() => setShowAuthModal(false)}
+            onClose={handleCloseAuthModal}
             onAuthSuccess={handleAuthSuccess}
             botUsername="match_hunters_bot"
           />
