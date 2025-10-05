@@ -14,7 +14,7 @@ export function NewsBlock({ name, description, category, source, date }: NewsBlo
   return (
     <motion.div className={classes.container}>
       <Card className={classes.card} radius="md" withBorder>
-        <Group justify="space-between" align="flex-start">
+        <Group className={classes.header}>
           <Text className={classes.title}>{name}</Text>
           <Badge className={classes.category}>{category}</Badge>
         </Group>
