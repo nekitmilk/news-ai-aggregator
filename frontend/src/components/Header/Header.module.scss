@@ -1,11 +1,9 @@
 .header {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid #e2e8f0;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   height: 70px;
-  display: flex;
-  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .headerContainer {
@@ -13,21 +11,102 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 1200px;
+  width: 100%;
+  max-width: 1200px !important;
+  padding: 0 15px !important;
 }
 
 .logoText {
-  background: linear-gradient(135deg, #3182ce 0%, #2c5aa0 100%);
+  background: linear-gradient(135deg, #3182ce 0%, #63b3ed 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  font-size: 20px !important;
+  user-select: none;
 }
 
 .telegramButton {
+  font-weight: 600;
   transition: all 0.3s ease;
 
   &:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+  }
+}
+
+.authButton {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  font-weight: 500;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 4px 8px rgba(44, 90, 160, 0.2);
+  }
+}
+
+.menuDropdown {
+  background: #2d2d2d;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+.menuLabel {
+  color: #a0a0a0;
+  font-weight: 500;
+}
+
+.menuItem {
+  transition: all 0.2s ease;
+}
+.username {
+  color: #64748b !important;
+  &:hover {
+    background-color: white !important;
+    cursor: default;
+  }
+}
+.logout {
+  color: #fa5252 !important;
+  &:hover {
+    background-color: #fa5252;
+    color: white !important;
+  }
+}
+
+// Адаптивность
+@media (max-width: 768px) {
+  .header {
+    height: 60px;
+  }
+
+  .logoText {
+    font-size: 18px;
+  }
+
+  .telegramButton,
+  .authButton {
+    font-size: 14px;
+    padding: 8px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logoText {
+    font-size: 16px;
+  }
+
+  .telegramButton,
+  .authButton {
+    font-size: 12px;
+    padding: 6px 12px;
+
+    & > span {
+      gap: 4px;
+    }
   }
 }
