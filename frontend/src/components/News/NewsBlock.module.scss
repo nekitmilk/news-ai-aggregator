@@ -20,7 +20,11 @@
     transform: translateY(-px) !important;
   }
 }
-
+.header {
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  flex-wrap: nowrap !important;
+}
 .title {
   font-size: 1.4rem !important;
   font-weight: 700 !important;
@@ -48,6 +52,7 @@
   padding: 6px 12px !important;
   border: none !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  flex-shrink: 0 !important;
 }
 
 .source {
