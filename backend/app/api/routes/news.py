@@ -40,7 +40,7 @@ def get_news(
         
         if start_date:
             try:
-                start_dt = parser.parse(start_date)
+                start_dt = parser.parse(start_date, dayfirst=True)
                 if start_dt.tzinfo is not None:
                     start_dt = start_dt.replace(tzinfo=None)
 
@@ -52,7 +52,7 @@ def get_news(
         
         if end_date:
             try:
-                end_dt = parser.parse(end_date)
+                end_dt = parser.parse(end_date, dayfirst=True)
                 if end_dt.hour == 0 and end_dt.minute == 0 and end_dt.second == 0:
                     end_dt = end_dt.replace(hour=23, minute=59, second=59)
                 if end_dt.tzinfo is not None:
