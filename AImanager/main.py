@@ -2,9 +2,7 @@ import json
 import redis
 import pika
 import logging
-import threading
 import time
-from queue import Queue
 from manager import SummarizerManager
 from categorizer_manager import CategorizerManager
 import uuid
@@ -88,6 +86,7 @@ class NewsConsumer:
                 self.connect_rabbitmq()
 
     def callback(self, ch, method, properties, body):
+        """Основная логика обработки сообщения"""
         key = body.decode('utf-8')
         news_json_raw = self.redis_client.get(key)
         if not news_json_raw:
@@ -103,72 +102,47 @@ class NewsConsumer:
             ch.basic_ack(delivery_tag=method.delivery_tag)
             return
 
-        # Очередь для результата из потока
-        result_queue = Queue()
+        try:
+            # --- Summarization ---
+            summary, sum_duration = self.summarizer_manager.summarize(text)
+            logger.info(f"[SUMMARY]: {summary}")
+            logger.info(f"⏱ Время суммаризации: {sum_duration:.2f} сек")
 
-        def process_in_thread():
-            try:
-                # --- Summarization ---
-                summary, sum_duration = self.summarizer_manager.summarize(text)
-                logger.info(f"[SUMMARY]: {summary}")
-                logger.info(f"⏱ Время суммаризации: {sum_duration:.2f} сек")
+            # --- Categorization ---
+            categories, cat_duration = self.categorizer_manager.categorize(summary)
+            best_cat = categories[0]["label"] if categories else "другое"
+            score = categories[0]["score"] if categories else 0.0
+            logger.info(f"[CATEGORY]: {best_cat} (score={score:.2f})")
+            logger.info(f"⏱ Время категоризации: {cat_duration:.2f} сек")
 
-                # --- Categorization ---
-                categories, cat_duration = self.categorizer_manager.categorize(summary)
-                best_cat = categories[0]["label"] if categories else "другое"
-                score = categories[0]["score"] if categories else 0.0
-                logger.info(f"[CATEGORY]: {best_cat} (score={score:.2f})")
-                logger.info(f"⏱ Время категоризации: {cat_duration:.2f} сек")
+            # --- Формируем JSON ---
+            processed_news = {
+                **news_data,
+                "id": str(uuid.uuid4()),
+                "title": news_data.get('header', ''),
+                "summary": summary,
+                "category": best_cat
+            }
 
-                # --- Формируем JSON ---
-                processed_news = {
-                    **news_data,
-                    "id": str(uuid.uuid4()),
-                    "title": news_data.get('header', ''),
-                    "summary": summary,
-                    "category": best_cat
-                }
+            # --- Отправка ---
+            self.send_to_processed_queue(processed_news, ch)
 
-                result_queue.put(("success", processed_news))
-            except Exception as e:
-                logger.error(f"❌ Ошибка при обработке текста: {e}", exc_info=True)
-                result_queue.put(("error", None))
+            # --- Подтверждение ---
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            logger.info("✅ Сообщение успешно обработано")
 
-        # Запуск потока для обработки
-        thread = threading.Thread(target=process_in_thread)
-        thread.start()
-
-        # Поддержка heartbeat во время обработки
-        while thread.is_alive():
-            try:
-                self.rabbit_connection.process_data_events(time_limit=1)
-            except Exception as e:
-                logger.warning(f"⚠️ Ошибка в process_data_events: {e}")
-            time.sleep(0.1)
-
-        thread.join()
-
-        # Получаем результат
-        status, processed_news = result_queue.get()
-
-        if status == "error":
+        except Exception as e:
+            logger.error(f"❌ Ошибка при обработке текста: {e}", exc_info=True)
             ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
-            return
-
-        # Отправка в processed_queue
-        self.send_to_processed_queue(processed_news, ch)
-
-        # Ack
-        ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def send_to_processed_queue(self, news_json: dict, ch):
-        """Отправка обработанной новости с переподключением"""
+        """Отправка обработанной новости с переподключением при потере соединения"""
         while True:
             try:
                 ch.basic_publish(
                     exchange='',
                     routing_key=self.processed_queue_name,
-                    body=json.dumps(news_json),
+                    body=json.dumps(news_json, ensure_ascii=False),
                     properties=pika.BasicProperties(delivery_mode=2)
                 )
                 logger.info(f"📤 Новость отправлена в очередь '{self.processed_queue_name}'")
@@ -178,7 +152,7 @@ class NewsConsumer:
                     pika.exceptions.ConnectionClosed) as e:
                 logger.warning(f"⚠️ Соединение потеряно при отправке: {e}, переподключаемся...")
                 self.connect_rabbitmq()
-                ch = self.channel  # Обновляем канал после переподключения
+                ch = self.channel  # обновляем канал после переподключения
 
 
 if __name__ == "__main__":
