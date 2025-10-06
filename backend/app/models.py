@@ -5,7 +5,7 @@ from typing import Optional, List, Any
 
 from pydantic import BaseModel, field_validator, ConfigDict
 from sqlmodel import Field, Relationship, SQLModel
-from sqlalchemy import Text, Column
+from sqlalchemy import Text, Column, BigInteger
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.types import UUID as SA_UUID
 
@@ -118,7 +118,10 @@ class NewsFilter(BaseModel):
 
 # ===== USER FILTER MODELS =====
 class UserFilter(SQLModel, table=True):
-    user_id: int = Field(primary_key=True)  # Telegram ID как первичный ключ
+    user_id: int = Field(
+        primary_key=True,
+        sa_column=Column(BigInteger)
+    )
     category: List[uuid.UUID] = Field(default=[], sa_column=Column(ARRAY(SA_UUID)))
     source: List[uuid.UUID] = Field(default=[], sa_column=Column(ARRAY(SA_UUID)))
     search: Optional[str] = Field(default=None, max_length=500)
