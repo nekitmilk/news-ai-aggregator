@@ -5,6 +5,7 @@ from typing import Optional, List, Any
 
 from pydantic import (
     field_validator,
+    field_serializer,
     ConfigDict,
     BaseModel,
 )
@@ -173,6 +174,13 @@ class UserFilterUpdate(UserFilterBase):
 
 class UserFilterResponse(UserFilterBase):
     user_id: int
+
+    @field_serializer('start_date', 'end_date')
+    def serialize_dates(self, value: Optional[datetime]) -> Optional[str]:
+        if value is None:
+            return None
+        return value.strftime('%d-%m-%Y')
+
 
 class UserFilterListResponse(ResponseAPI):
     result: List[UserFilterResponse]
