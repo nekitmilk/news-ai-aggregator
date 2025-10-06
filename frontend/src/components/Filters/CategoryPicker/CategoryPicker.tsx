@@ -5,9 +5,9 @@ import classes from './CategoryPicker.module.scss';
 import { useApi } from '@/hooks/useApi';
 import { Toast } from '@/components/common/ToastNotify/ToastNotify';
 
-type Props = { value: string[]; onChange: (v: string[]) => void };
+type Props = { value: string[]; onChange: (v: string[]) => void; disabled: boolean };
 
-export function CategoryPicker({ value = [], onChange }: Props) {
+export function CategoryPicker({ value = [], onChange, disabled }: Props) {
   const [categories, setCategories] = useState<{ label: string; value: string }[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -15,7 +15,7 @@ export function CategoryPicker({ value = [], onChange }: Props) {
 
   useEffect(() => {
     const loadCategories = async () => {
-      const result = await makeRequest<Category[]>('/api/v1/categories/');
+      const result = await makeRequest<Category[]>('/categories/');
 
       if (result.success && result.data) {
         const formattedCategories = result.data.map((cat) => ({
@@ -62,6 +62,7 @@ export function CategoryPicker({ value = [], onChange }: Props) {
         value={value || []}
         onChange={(newValue) => onChange(newValue || [])}
         searchable
+        disabled={disabled}
         clearable={false}
         nothingFoundMessage="Категория не найдена"
         withAsterisk={false}

@@ -5,9 +5,9 @@ import classes from './SourcePicker.module.scss';
 import { useApi } from '@/hooks/useApi';
 import { Toast } from '@/components/common/ToastNotify/ToastNotify';
 
-type Props = { value: string[]; onChange: (v: string[]) => void };
+type Props = { value: string[]; onChange: (v: string[]) => void; disabled: boolean };
 
-export function SourcePicker({ value = [], onChange }: Props) {
+export function SourcePicker({ value = [], onChange, disabled }: Props) {
   const [sources, setSources] = useState<{ label: string; value: string }[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -15,7 +15,7 @@ export function SourcePicker({ value = [], onChange }: Props) {
 
   useEffect(() => {
     const loadSources = async () => {
-      const result = await makeRequest<Source[]>('/api/v1/sources/');
+      const result = await makeRequest<Source[]>('/sources/');
 
       if (result.success && result.data) {
         const formattedSources = result.data.map((src) => ({
@@ -62,6 +62,7 @@ export function SourcePicker({ value = [], onChange }: Props) {
         value={value || []}
         onChange={(newValue) => onChange(newValue || [])}
         searchable
+        disabled={disabled}
         clearable={false}
         nothingFoundMessage="Источник не найден"
         withAsterisk={false}
