@@ -70,7 +70,8 @@ def generate_sample_news():
 
 # ---------- Основные функции ----------
 def init_db(session: Session) -> None:
-    init_news_data(session)
+    # init_news_data(session)
+    pass
 
 
 def init_news_data(session: Session) -> None:

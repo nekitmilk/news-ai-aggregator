@@ -118,16 +118,13 @@ class NewsFilter(BaseModel):
 
 # ===== USER FILTER MODELS =====
 class UserFilter(SQLModel, table=True):
-    user_id: int = Field(
-        primary_key=True,
-        sa_column=Column(BigInteger)
-    )
-    category: List[uuid.UUID] = Field(default=[], sa_column=Column(ARRAY(SA_UUID)))
-    source: List[uuid.UUID] = Field(default=[], sa_column=Column(ARRAY(SA_UUID)))
+    user_id: int = Field(primary_key=True, sa_type=BigInteger)
+    category: List[uuid.UUID] = Field(default=[], sa_type=ARRAY(SA_UUID))
+    source: List[uuid.UUID] = Field(default=[], sa_type=ARRAY(SA_UUID))
     search: Optional[str] = Field(default=None, max_length=500)
     start_date: Optional[datetime] = Field(default=None)
     end_date: Optional[datetime] = Field(default=None)
-    sort: Optional[str] = Field(default=None, max_length=10)  # "asc" or "desc"
+    sort: Optional[str] = Field(default=None, max_length=10) # "asc" or "desc"
     # по хорошему установить связь с таблицей user_history
 
 class UserFilterBase(SQLModel):
