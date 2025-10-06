@@ -26,7 +26,7 @@ export function useApi() {
         setError(null);
 
         const response = await axios({
-          url: `http://localhost:8000${url}`,
+          url: `${import.meta.env.VITE_API_URL}${url}`,
           method,
           data,
           params,
