@@ -1,3 +1,4 @@
+import uuid
 import json
 import logging
 import asyncio
@@ -13,7 +14,16 @@ import pytz
 
 from app.core.config import settings
 from app.core.db import engine
-from app.models import ProcessedNews, Source, Category
+from app.models import (
+    ProcessedNews,
+    Source,
+    Category,
+    NewsVector, NewsVectorCreate
+)
+from app.recommendation_system.news_recommender import (
+    Entity,
+    NewsRecommender
+)
 
 logger = logging.getLogger(__name__)
 
@@ -147,6 +157,15 @@ class NewsConsumer:
                 session.add(db_news)
                 session.commit()
                 logger.info(f"Saved: {title}")
+
+                self.save_news_vector(
+                    session=session,
+                    news_id=db_news.id,
+                    title=title,
+                    summary=summary,
+                    category=category.name,
+                    news_timestamp=published_date
+                )
                 
         except Exception as e:
             logger.error(f"Save error: {e}")
@@ -212,6 +231,36 @@ class NewsConsumer:
         """Callback при автоматическом переподключении"""
         logger.info("RabbitMQ connection restored automatically")
         self.is_connected = True
+
+    def save_news_vector(self, session: Session, news_id: uuid.UUID, title: str,
+                         summary: str, category: str, news_timestamp: datetime):
+        try:
+            recommender = NewsRecommender()
+            entity: Entity = recommender.create_news_vector(news_id, title, summary, category, news_timestamp)
+            
+            existing_vector = session.exec(
+                select(NewsVector).where(NewsVector.news_id == news_id)
+            ).first()
+            
+            if existing_vector:
+                existing_vector.vector = entity.vector
+                existing_vector.updated_at = datetime.utcnow()
+                session.add(existing_vector)
+                logger.info(f"Updated vector for news: {news_id}")
+            else:
+                vector_data = NewsVectorCreate(
+                    news_id=news_id,
+                    vector=entity.vector
+                )
+                news_vector = NewsVector(**vector_data.dict())
+                session.add(news_vector)
+                logger.info(f"Created vector for news: {news_id}")
+            
+            session.commit()
+            
+        except Exception as e:
+            logger.error(f"Error saving news vector for {news_id}: {e}")
+            session.rollback()
 
 # Глобальный экземпляр
 news_consumer = NewsConsumer()
