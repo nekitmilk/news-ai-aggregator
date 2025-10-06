@@ -1,10 +1,11 @@
 import uuid
 from datetime import datetime
+from dateutil import parser
 from typing import Optional, List, Any
 
 from pydantic import BaseModel, field_validator, ConfigDict
 from sqlmodel import Field, Relationship, SQLModel
-from sqlalchemy import Text, Column
+from sqlalchemy import Text, Column, BigInteger
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.types import UUID as SA_UUID
 
@@ -117,7 +118,10 @@ class NewsFilter(BaseModel):
 
 # ===== USER FILTER MODELS =====
 class UserFilter(SQLModel, table=True):
-    user_id: int = Field(primary_key=True)  # Telegram ID как первичный ключ
+    user_id: int = Field(
+        primary_key=True,
+        sa_column=Column(BigInteger)
+    )
     category: List[uuid.UUID] = Field(default=[], sa_column=Column(ARRAY(SA_UUID)))
     source: List[uuid.UUID] = Field(default=[], sa_column=Column(ARRAY(SA_UUID)))
     search: Optional[str] = Field(default=None, max_length=500)
@@ -144,6 +148,16 @@ class UserFilterBase(SQLModel):
             if v_lower not in ['asc', 'desc']:
                 raise ValueError('Sort must be either "asc" or "desc"')
             return v_lower
+        return v
+    
+    @field_validator('start_date', 'end_date', mode='before')
+    @classmethod
+    def validate_date_format(cls, v):
+        if isinstance(v, str):
+            try:
+                return parser.parse(v, dayfirst=True)
+            except (ValueError, TypeError) as e:
+                raise ValueError(f'Invalid date format: {v}. Supported formats: dd/mm/yyyy, yyyy-mm-dd, etc.')
         return v
 
 class UserFilterCreate(UserFilterBase):

@@ -1,11 +1,6 @@
 import { useState, useCallback } from 'react';
 import axios from 'axios';
 
-// interface UseApiOptions {
-//   onSuccess?: (data: any) => void;
-//   onError?: (error: string) => void;
-// }
-
 export function useApi() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -17,19 +12,26 @@ export function useApi() {
         method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
         data?: any;
         params?: any;
+        headers?: any;
       } = {},
     ): Promise<{ data: T | null; success: boolean; error: string | null }> => {
-      const { method = 'GET', data, params } = options;
+      const { method = 'GET', data, params, headers = {} } = options;
 
       try {
         setLoading(true);
         setError(null);
 
+        const apiUrl = `/api/api/v1${url}`;
+
         const response = await axios({
-          url: `${import.meta.env.VITE_API_URL}${url}`,
+          url: apiUrl,
           method,
           data,
           params,
+          headers: {
+            'Content-Type': 'application/json',
+            ...headers,
+          },
         });
 
         const apiResponse = response.data as ApiResponse<T>;

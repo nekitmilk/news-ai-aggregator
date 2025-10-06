@@ -34,6 +34,6 @@ export async function fetchNews(filters: NewsFilters) {
     ...filters,
     sort: filters.sort ?? undefined,
   };
-  const res = await axios.get<NewsResponse>('http://localhost:8000/api/v1/news', { params });
+  const res = await axios.get<NewsResponse>('/api/api/v1/news', { params });
   return res.data.result;
 }
