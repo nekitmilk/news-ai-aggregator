@@ -30,7 +30,7 @@
 .telegramButton {
   font-weight: 600;
   transition: all 0.3s ease;
-
+  width: 200px !important;
   &:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
@@ -43,7 +43,7 @@
   color: white;
   font-weight: 500;
   transition: all 0.3s ease;
-
+  width: 200px !important;
   &:hover {
     box-shadow: 0 4px 8px rgba(44, 90, 160, 0.2);
   }

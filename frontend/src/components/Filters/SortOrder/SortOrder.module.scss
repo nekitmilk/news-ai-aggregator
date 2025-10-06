@@ -48,3 +48,17 @@
     border-color: #93c5fd;
   }
 }
+.button:disabled {
+  background: #f8f9fa;
+  color: #adb5bd;
+  border-color: #e9ecef;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.buttonActive:disabled {
+  background: #a0aec0;
+  border-color: #a0aec0;
+  color: white;
+  opacity: 0.6;
+}

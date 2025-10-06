@@ -30,20 +30,6 @@ export function Header({ onTelegramClick, isAuthenticated, user, onLogout }: Hea
     return user.first_name || user.username || 'Пользователь';
   };
 
-  const getUserInitials = () => {
-    if (!user) return 'U';
-
-    if (user.first_name) {
-      return user.first_name.charAt(0).toUpperCase();
-    }
-
-    if (user.username) {
-      return user.username.charAt(0).toUpperCase();
-    }
-
-    return 'U';
-  };
-
   return (
     <div className={classes.header}>
       <Container size="xl" className={classes.headerContainer}>
@@ -51,7 +37,7 @@ export function Header({ onTelegramClick, isAuthenticated, user, onLogout }: Hea
           <Group gap="sm">
             <IconNews size={32} color="#3182ce" />
             <Text fw={700} size="xl" className={classes.logoText}>
-              NewsAggregator
+              NewsHunter
             </Text>
           </Group>
 
@@ -71,15 +57,7 @@ export function Header({ onTelegramClick, isAuthenticated, user, onLogout }: Hea
                   variant="light"
                   radius="md"
                   size="md"
-                  leftSection={
-                    user?.photo_url ? (
-                      <Avatar src={user.photo_url} size={26} radius="xl" />
-                    ) : (
-                      <Avatar size={26} radius="xl" color="blue">
-                        {getUserInitials()}
-                      </Avatar>
-                    )
-                  }
+                  leftSection={user?.photo_url ? <Avatar src={user.photo_url} size={26} radius="xl" /> : null}
                   className={classes.authButton}
                 >
                   {getUserDisplayName()}
@@ -112,16 +90,7 @@ export function Header({ onTelegramClick, isAuthenticated, user, onLogout }: Hea
         </Group>
       </Container>
 
-      <Modal
-        opened={opened}
-        onClose={close}
-        title="Подтверждение выхода"
-        centered
-        size="sm"
-        overlayProps={{
-          backgroundOpacity: 0.55,
-        }}
-      >
+      <Modal opened={opened} onClose={close} title="Подтверждение выхода" centered size="sm">
         <Text size="sm" mb="md">
           Вы уверены, что хотите выйти из аккаунта?
         </Text>

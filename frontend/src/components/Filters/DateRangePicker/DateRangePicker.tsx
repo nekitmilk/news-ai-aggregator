@@ -10,9 +10,10 @@ type Props = {
   endDate?: string;
   onStartChange: (v: string) => void;
   onEndChange: (v: string) => void;
+  disabled: boolean;
 };
 
-export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange }: Props) {
+export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange, disabled }: Props) {
   const filterInput = (event: React.KeyboardEvent<HTMLInputElement>) => {
     const allowedKeys = [
       '0',
@@ -25,8 +26,8 @@ export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange
       '7',
       '8',
       '9',
-      '.', 
-      '-', 
+      '.',
+      '-',
       'Backspace',
       'Delete',
       'Tab',
@@ -75,7 +76,7 @@ export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange
             Начальная дата
           </div>
         }
-        placeholder="дд.мм.гггг" 
+        placeholder="дд.мм.гггг"
         value={getDateValue(startDate)}
         onChange={(date) => {
           if (date) {
@@ -87,7 +88,8 @@ export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange
         }}
         onKeyDown={filterInput}
         radius="md"
-        valueFormat="DD.MM.YYYY" 
+        disabled={disabled}
+        valueFormat="DD.MM.YYYY"
         locale="ru"
         classNames={{
           root: classes.datePicker,
@@ -111,7 +113,7 @@ export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange
             Конечная дата
           </div>
         }
-        placeholder="дд.мм.гггг" 
+        placeholder="дд.мм.гггг"
         value={getDateValue(endDate)}
         onChange={(date) => {
           if (date) {
@@ -123,8 +125,9 @@ export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange
         }}
         onKeyDown={filterInput}
         radius="md"
-        valueFormat="DD.MM.YYYY" 
+        valueFormat="DD.MM.YYYY"
         locale="ru"
+        disabled={disabled}
         classNames={{
           root: classes.datePicker,
           input: classes.dateInput,
