@@ -15,7 +15,6 @@ export function TelegramWidget({ botUsername, onAuth, isVisible = true }: Telegr
     if (isVisible) {
       setShouldRender(true);
     } else {
-      // Ждем завершения анимации перед скрытием
       const timer = setTimeout(() => setShouldRender(false), 300);
       return () => clearTimeout(timer);
     }

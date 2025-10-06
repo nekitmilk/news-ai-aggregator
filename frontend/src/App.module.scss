@@ -30,6 +30,13 @@
   justify-content: center;
   z-index: 1000;
 }
+.filterActionsContainer {
+  display: flex;
+  justify-content: space-between !important;
+  width: 100%;
+  align-items: center;
+  flex-wrap: wrap;
+}
 
 .authModal {
   background: white;
@@ -78,31 +85,6 @@
 }
 
 .main {
-  min-height: 100vh;
-  width: 100%;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 25%, #dbeafe 50%, #eff6ff 75%, #f0fdfa 100%);
-  background-size: 400% 400%;
-  animation: gentleGradient 20s ease infinite;
-  padding: 0;
-  padding-bottom: 40px;
-  position: relative;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background:
-      radial-gradient(circle at 10% 20%, rgba(186, 230, 253, 0.4) 0%, transparent 40%),
-      radial-gradient(circle at 90% 80%, rgba(191, 219, 254, 0.3) 0%, transparent 40%),
-      radial-gradient(circle at 50% 50%, rgba(224, 242, 254, 0.2) 0%, transparent 50%);
-    pointer-events: none;
-  }
-}
-
-.main {
   min-height: calc(100vh - 70px); // Учитываем высоту хедера
   width: 100%;
   background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 25%, #dbeafe 50%, #eff6ff 75%, #f0fdfa 100%);
@@ -129,7 +111,7 @@
 .section {
   margin: 0 auto;
   width: 1200px;
-  padding: 20px 20px;
+  padding: 20px 15px;
 }
 
 .paper {
