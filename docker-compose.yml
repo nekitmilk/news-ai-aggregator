@@ -179,7 +179,7 @@ services:
     volumes:
       - .:/app
     working_dir: /app
-    command: python parser/main.py   # или ваш entrypoint
+    command: python parser/main.py
 
   redis:
     image: redis:7-alpine

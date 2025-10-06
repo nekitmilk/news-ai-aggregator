@@ -70,7 +70,8 @@ def generate_sample_news():
 
 # ---------- Основные функции ----------
 def init_db(session: Session) -> None:
-    init_news_data(session)
+    # init_news_data(session)
+    crud.create_vectors_for_unprocessed_news(session)
 
 
 def init_news_data(session: Session) -> None:
@@ -112,7 +113,7 @@ def init_news_data(session: Session) -> None:
             news_count += 1
 
     session.commit()
-    print(f"Добавлено {news_count} тестовых новостей")
+    print(f"Добавлено {news_count} тестовых новостей")    
 
 
 if __name__ == "__main__":
