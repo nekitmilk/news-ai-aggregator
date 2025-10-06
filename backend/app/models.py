@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from dateutil import parser
 from typing import Optional, List, Any
 
 from pydantic import BaseModel, field_validator, ConfigDict
@@ -144,6 +145,16 @@ class UserFilterBase(SQLModel):
             if v_lower not in ['asc', 'desc']:
                 raise ValueError('Sort must be either "asc" or "desc"')
             return v_lower
+        return v
+    
+    @field_validator('start_date', 'end_date', mode='before')
+    @classmethod
+    def validate_date_format(cls, v):
+        if isinstance(v, str):
+            try:
+                return parser.parse(v, dayfirst=True)
+            except (ValueError, TypeError) as e:
+                raise ValueError(f'Invalid date format: {v}. Supported formats: dd/mm/yyyy, yyyy-mm-dd, etc.')
         return v
 
 class UserFilterCreate(UserFilterBase):
