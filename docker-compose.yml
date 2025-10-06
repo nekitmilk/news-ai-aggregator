@@ -165,28 +165,28 @@ services:
       # Enable redirection for HTTP and HTTPS
       - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.middlewares=https-redirect
 
-#   parser:
-#     build:
-#       context: ./parser
-#       dockerfile: Dockerfile
-#     container_name: parser_app
-#     restart: always
-#     depends_on:
-#       - redis
-#       - rabbitmq
-#     environment:
-#       - PYTHONUNBUFFERED=1
-#     volumes:
-#       - .:/app
-#     working_dir: /app
-#     command: python parser/main.py   # или ваш entrypoint
+  parser:
+    build:
+      context: ./parser
+      dockerfile: Dockerfile
+    container_name: parser_app
+    restart: always
+    depends_on:
+      - redis
+      - rabbitmq
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: python parser/main.py   # или ваш entrypoint
 
-#   redis:
-#     image: redis:7-alpine
-#     container_name: parser_redis
-#     restart: always
-#     ports:
-#       - "6379:6379"
+  redis:
+    image: redis:7-alpine
+    container_name: parser_redis
+    restart: always
+    ports:
+      - "6379:6379"
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -199,49 +199,49 @@ services:
       - RABBITMQ_DEFAULT_USER=guest
       - RABBITMQ_DEFAULT_PASS=guest
 
-#   consumer:
-#     build:
-#       context: .
-#       dockerfile: AImanager/Dockerfile
-#     container_name: consumer_app
-#     restart: always
-#     depends_on:
-#       - redis
-#       - rabbitmq
-#     environment:
-#       - PYTHONUNBUFFERED=1
-#       - NVIDIA_VISIBLE_DEVICES=all
-#       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
-#       - TRANSFORMERS_CACHE=/root/.cache/huggingface
-#       - HF_HOME=/root/.cache/huggingface
-#     volumes:
-#       - .:/app
-#       - ./models:/root/.cache/huggingface
-#     working_dir: /app
-#     command: python AImanager/main.py
-#     deploy:
-#       resources:
-#         reservations:
-#           devices:
-#             - driver: nvidia
-#               count: all
-#               capabilities: [ gpu ]
-#     runtime: nvidia
-#   bot:
-#     build:
-#       context: ./tgbot
-#       dockerfile: Dockerfile
-#     container_name: news_bot
-#     restart: always
-#     depends_on:
-#       backend:
-#         condition: service_healthy
-#     environment:
-#       - BOT_TOKEN=8211185145:AAFn9NGTL51sntgmZCryXhqqJ_9NKcHtoYo
-#       - API_URL=http://backend:8000/api/v1
-#     networks:
-#       - default
-#     command: ["python", "bot.py"]
+  consumer:
+    build:
+      context: .
+      dockerfile: AImanager/Dockerfile
+    container_name: consumer_app
+    restart: always
+    depends_on:
+      - redis
+      - rabbitmq
+    environment:
+      - PYTHONUNBUFFERED=1
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - TRANSFORMERS_CACHE=/root/.cache/huggingface
+      - HF_HOME=/root/.cache/huggingface
+    volumes:
+      - .:/app
+      - ./models:/root/.cache/huggingface
+    working_dir: /app
+    command: python AImanager/main.py
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    runtime: nvidia
+  bot:
+    build:
+      context: ./tgbot
+      dockerfile: Dockerfile
+    container_name: news_bot
+    restart: always
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - BOT_TOKEN=8211185145:AAFn9NGTL51sntgmZCryXhqqJ_9NKcHtoYo
+      - API_URL=http://backend:8000/api/v1
+    networks:
+      - default
+    command: ["python", "bot.py"]
 
 volumes:
   app-db-data:
