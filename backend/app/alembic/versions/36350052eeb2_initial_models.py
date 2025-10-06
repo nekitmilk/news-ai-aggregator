@@ -1,18 +1,18 @@
-"""add news models
+"""Initial models
 
-Revision ID: d5fa329f1670
-Revises: 1a31ce608336
-Create Date: 2025-09-30 20:07:37.928695
+Revision ID: 36350052eeb2
+Revises: 
+Create Date: 2025-10-06 16:42:35.576904
 
 """
 from alembic import op
 import sqlalchemy as sa
 import sqlmodel.sql.sqltypes
-
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = 'd5fa329f1670'
-down_revision = '1a31ce608336'
+revision = '36350052eeb2'
+down_revision = None
 branch_labels = None
 depends_on = None
 
@@ -32,6 +32,16 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_source_name'), 'source', ['name'], unique=True)
+    op.create_table('userfilter',
+    sa.Column('user_id', sa.BigInteger(), nullable=False),
+    sa.Column('category', postgresql.ARRAY(sa.UUID()), nullable=False),
+    sa.Column('source', postgresql.ARRAY(sa.UUID()), nullable=False),
+    sa.Column('search', sqlmodel.sql.sqltypes.AutoString(length=500), nullable=True),
+    sa.Column('start_date', sa.DateTime(), nullable=True),
+    sa.Column('end_date', sa.DateTime(), nullable=True),
+    sa.Column('sort', sqlmodel.sql.sqltypes.AutoString(length=10), nullable=True),
+    sa.PrimaryKeyConstraint('user_id')
+    )
     op.create_table('processednews',
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('title', sqlmodel.sql.sqltypes.AutoString(length=500), nullable=False),
@@ -54,6 +64,7 @@ def downgrade():
     op.drop_index(op.f('ix_processednews_title'), table_name='processednews')
     op.drop_index(op.f('ix_processednews_published_at'), table_name='processednews')
     op.drop_table('processednews')
+    op.drop_table('userfilter')
     op.drop_index(op.f('ix_source_name'), table_name='source')
     op.drop_table('source')
     op.drop_index(op.f('ix_category_name'), table_name='category')
