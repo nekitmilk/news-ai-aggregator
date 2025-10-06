@@ -1,16 +1,19 @@
 import uuid
-from typing import Any, List
+import numpy as np
+from app.recommendation_system.news_recommender import (
+    Entity,
+    NewsRecommender
+)
+from datetime import datetime
+from typing import List, Optional
 from sqlmodel import Session, select
 from app.models import (
-    Source, 
-    Category, 
-    ProcessedNews, 
-    NewsFilter, 
-    SourceCreate, 
-    CategoryCreate,
-    UserFilter,
-    UserFilterCreate,
-    UserFilterUpdate
+    Source, SourceCreate,
+    Category, CategoryCreate,
+    ProcessedNews, NewsFilter,
+    UserFilter, UserFilterCreate, UserFilterUpdate,
+    UserHistory, UserHistoryCreate,
+    NewsVector, NewsVectorCreate
 )
 
 
@@ -130,3 +133,191 @@ def delete_user_filter(*, session: Session, user_id: int) -> bool:
     session.delete(user_filter)
     session.commit()
     return True
+
+def get_recent_news_ids(session: Session, limit: int = 1000) -> List[uuid.UUID]:
+    statement = (
+        select(ProcessedNews.id)
+        .order_by(ProcessedNews.published_at.desc())
+        .limit(limit)
+    )
+    
+    return session.exec(statement).all()
+
+def get_news_by_ids(session: Session, news_ids: List[uuid.UUID]) -> List[ProcessedNews]:
+    if not news_ids:
+        return []
+    
+    statement = (
+        select(
+            ProcessedNews.id,
+            ProcessedNews.title,
+            ProcessedNews.summary,
+            ProcessedNews.url,
+            ProcessedNews.published_at,
+            Category.name.label('category_name'),
+            Source.name.label('source_name')
+        )
+        .join(Category, ProcessedNews.category_id == Category.id)
+        .join(Source, ProcessedNews.source_id == Source.id)
+        .where(ProcessedNews.id.in_(news_ids))
+    )
+    
+    results = session.exec(statement).all()
+    news_dict = {news.id: news for news in results}
+    return [news_dict[news_id] for news_id in news_ids if news_id in news_dict]
+
+def get_user_history(
+    session: Session,
+    page: int = 1,
+    limit: int = 100,
+    user_id: int = None,
+    news_id: uuid.UUID = None
+) -> List[UserHistory]:
+    """Получить историю просмотров с фильтрацией и пагинацией"""
+    query = session.query(UserHistory)
+    
+    if user_id:
+        query = query.filter(UserHistory.user_id == user_id)
+    if news_id:
+        query = query.filter(UserHistory.news_id == news_id)
+        
+    offset = (page - 1) * limit
+    return query.offset(offset).limit(limit).all()
+
+def create_user_history(
+    session: Session,
+    history_create: UserHistoryCreate
+) -> UserHistory:
+    """Создать запись в истории просмотров"""
+    history = UserHistory(**history_create.dict())
+    session.add(history)
+    session.commit()
+    session.refresh(history)
+    return history
+
+def get_news_vector_by_news_id(session: Session, news_id: uuid.UUID) -> Optional[NewsVector]:
+    """Получить вектор по ID новости"""
+    return session.exec(
+        select(NewsVector).where(NewsVector.news_id == news_id)
+    ).first()
+
+def create_news_vector(session: Session, vector_data: NewsVectorCreate) -> NewsVector:
+    """Создать вектор для новости"""
+    existing = get_news_vector_by_news_id(session, vector_data.news_id)
+    if existing:
+        existing.vector = vector_data.vector
+        existing.updated_at = datetime.utcnow()
+        session.add(existing)
+        session.commit()
+        session.refresh(existing)
+        return existing
+    
+    vector = NewsVector(**vector_data.dict())
+    session.add(vector)
+    session.commit()
+    session.refresh(vector)
+    return vector
+
+# -------------------------------
+ 
+def get_news_vectors(session: Session, limit: int) -> List[Entity]:
+    query = (
+        select(
+            ProcessedNews.id,
+            NewsVector.vector,
+            ProcessedNews.published_at.label('timestamp'),
+        )
+        .join(NewsVector, ProcessedNews.id == NewsVector.news_id)
+        .order_by(ProcessedNews.published_at.desc())
+        .limit(limit)
+    )
+    
+    results = session.exec(query).all()
+    
+    return [
+        Entity(
+            id=row.id,
+            vector=row.vector,
+            timestamp=row.timestamp,
+        )
+        for row in results
+    ]
+
+def get_user_vectors(session: Session, user_id: int) -> List[Entity]:
+    query = (
+        select(
+            UserHistory.news_id,
+            NewsVector.vector,
+            UserHistory.view_timestamp,
+        )
+        .join(NewsVector, NewsVector.news_id == UserHistory.news_id)
+        .where(UserHistory.user_id == user_id)
+        .where(UserHistory.view_timestamp.is_not(None))
+        .order_by(UserHistory.view_timestamp.desc())
+    )
+  
+    results = session.exec(query).all()
+
+    return [
+        Entity(
+            id=row.news_id,
+            vector=np.array(row.vector),
+            timestamp=row.view_timestamp,
+        )
+        for row in results
+    ]
+
+def get_recommendeted_news(session: Session, user_id: int, limit: int) -> List[ProcessedNews]:
+    recommender = NewsRecommender()
+    
+    news_vectors = get_news_vectors(session, limit)
+    user_vectors = get_user_vectors(session, user_id)
+
+    result = recommender.get_recommendations(news_vectors, user_vectors, n=limit)
+
+    return get_news_by_ids(session, result)
+
+def create_vectors_for_unprocessed_news(
+    session: Session, 
+    batch_size: int = 1000
+) -> int:
+    unprocessed_news_query = (
+        select(ProcessedNews, Category, Source)
+        .join(Category, ProcessedNews.category_id == Category.id)
+        .join(Source, ProcessedNews.source_id == Source.id)
+        .join(NewsVector, ProcessedNews.id == NewsVector.news_id, isouter=True)
+        .where(NewsVector.news_id.is_(None))
+        .limit(batch_size)
+    )
+    
+    results = session.exec(unprocessed_news_query).all()
+    
+    created_count = 0
+    news_recommender = NewsRecommender()
+    for news, category, source in results:
+        try:
+            vector = news_recommender.create_news_vector(
+                news_id=news.id,
+                title=news.title,
+                summary=news.summary,
+                category=category.name,
+                news_timestamp=news.published_at
+            )
+            
+            news_vector_data = NewsVectorCreate(
+                news_id=news.id,
+                vector=vector.vector,
+            )
+            
+            create_news_vector(session, news_vector_data)
+            created_count += 1
+            
+        except Exception as e:
+            print(f"Ошибка при создании вектора для новости {news.id}: {e}")
+            session.rollback()
+            continue
+    
+    if created_count > 0:
+        session.commit()
+    
+    return created_count

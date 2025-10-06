@@ -556,6 +556,8 @@ def init_news_data(session: Session) -> None:
     session.commit()
     print(f"Добавлено {news_count} тестовых новостей")
 
+    crud.create_vectors_for_unprocessed_news(session)
+
 
 if __name__ == "__main__":
     with Session(engine) as session:
