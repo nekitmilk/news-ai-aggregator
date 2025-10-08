@@ -159,6 +159,8 @@ class UserFilterBase(SQLModel):
     @field_validator('start_date', 'end_date', mode='before')
     @classmethod
     def validate_date_format(cls, v):
+        if v == "":
+            return None
         if isinstance(v, str):
             try:
                 return parser.parse(v, dayfirst=True)
