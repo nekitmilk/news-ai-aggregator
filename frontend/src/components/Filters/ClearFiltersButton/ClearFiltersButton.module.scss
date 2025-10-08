@@ -1,7 +1,7 @@
 .button {
   background: transparent;
-  color: #3182ce;
-  border: 1.5px solid #3182ce;
+  color: #fa5252;
+  border: 1.5px solid #fa5252;
   border-radius: 8px;
   padding: 5px 10px;
   font-size: 14px;
@@ -17,21 +17,22 @@
   overflow: hidden;
 
   &:hover:not(:disabled) {
-    background: #3182ce;
+    background: #fa5252;
     color: white;
-    box-shadow: 0 4px 12px rgba(49, 130, 206, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(229, 62, 62, 0.2);
   }
 
   &:active:not(:disabled) {
-    transform: translateY(1px) scale(0.98);
-    box-shadow: 0 1px 3px rgba(49, 130, 206, 0.3);
-    transition: all 0.1s ease;
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(229, 62, 62, 0.2);
   }
 
   &:disabled {
     background: #f7fafc;
     color: #a0aec0;
     border-color: #e2e8f0;
+    cursor: default;
     transform: none;
     box-shadow: none;
   }
@@ -61,4 +62,22 @@
 
 .button:hover:not(:disabled) .icon {
   transform: scale(1.05);
+}
+
+.loading {
+  position: relative;
+  color: transparent;
+}
+
+.button:hover:not(:disabled).loading::after {
+  border-top-color: white;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

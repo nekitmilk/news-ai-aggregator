@@ -22,7 +22,7 @@ export function useApi() {
         setError(null);
 
         const apiUrl = `/api/api/v1${url}`;
-
+        console.log(data, headers, params);
         const response = await axios({
           url: apiUrl,
           method,
