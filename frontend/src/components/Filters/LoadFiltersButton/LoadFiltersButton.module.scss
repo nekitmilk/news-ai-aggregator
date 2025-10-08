@@ -19,20 +19,19 @@
   &:hover:not(:disabled) {
     background: #38a169;
     color: white;
-    transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(56, 161, 105, 0.2);
   }
 
   &:active:not(:disabled) {
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(56, 161, 105, 0.2);
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 0 1px 3px rgba(56, 161, 105, 0.3);
+    transition: all 0.1s ease;
   }
 
   &:disabled {
     background: #f7fafc;
     color: #a0aec0;
     border-color: #e2e8f0;
-    cursor: not-allowed;
     transform: none;
     box-shadow: none;
   }
@@ -62,28 +61,4 @@
 
 .button:hover:not(:disabled) .icon {
   transform: scale(1.05);
-}
-
-.loading {
-  position: relative;
-  color: transparent;
-
-  &::after {
-    content: '';
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    top: 50%;
-    left: 50%;
-    margin-left: -8px;
-    margin-top: -8px;
-    border: 2px solid transparent;
-    border-top: 2px solid #38a169;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-}
-
-.button:hover:not(:disabled) .loading::after {
-  border-top-color: white;
 }
