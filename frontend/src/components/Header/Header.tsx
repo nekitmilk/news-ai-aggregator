@@ -34,7 +34,7 @@ export function Header({ onTelegramClick, isAuthenticated, user, onLogout }: Hea
     <div className={classes.header}>
       <Container size="xl" className={classes.headerContainer}>
         <Group justify="space-between" align="center" h="100%" w="100%">
-          <Group gap="sm">
+          <Group className={classes.logo}>
             <IconNews size={32} color="#3182ce" />
             <Text fw={700} size="xl" className={classes.logoText}>
               NewsHunter
