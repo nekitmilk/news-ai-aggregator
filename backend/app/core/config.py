@@ -120,6 +120,11 @@ class Settings(BaseSettings):
         )
 
         return self
+    
+    VECTOR_SIZE: int = 500
+    FRESHNESS_WEIGHT: float =0.3
+    DECAY_FACTOR: float = 0.95
+    LIMIT_COEF: int = 3
 
 
 settings = Settings()  # type: ignore
