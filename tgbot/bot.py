@@ -527,6 +527,75 @@ async def show_saved_filters(message: types.Message):
     await message.answer(text, reply_markup=main_reply_keyboard())
 
 # ---------------------------
+# Получить персонализированные новости
+# ---------------------------
+@dp.message(lambda message: message.text and "персонализированные" in message.text.lower())
+async def get_personalized_news(message: types.Message):
+    user_id = message.from_user.id
+    page = user_pages.get(user_id, 1)
+    await send_personalized_news(user_id, message, page=page)
+
+
+# ---------------------------
+# Функция отправки персонализированных новостей
+# ---------------------------
+async def send_personalized_news(user_id: int, message_or_query, page: int = 1):
+    params = {
+        "id": user_id,
+        "limit": NEWS_LIMIT,
+        "page": page
+    }
+
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get(f"{API_URL.rstrip('/')}/news/recommendations", params=params, timeout=10) as resp:
+                data = await resp.json()
+
+                if not data.get("success", True):
+                    await message_or_query.answer("❌ Ошибка при получении персонализированных новостей: " + data.get("message", "Неизвестная ошибка"))
+                    return
+
+                news_list = data.get("result", [])
+                if not news_list:
+                    await message_or_query.answer("⚠️ Персонализированных новостей больше нет.")
+                    return
+
+                user_pages[user_id] = page
+
+                # Отправляем новости
+                for news in news_list:
+                    await message_or_query.answer(
+                        f"📌 [{news.get('category', 'Без категории')}] {news.get('title', 'Без заголовка')} ({news.get('source', '')})\n"
+                        f"{news.get('summary', '')}\n"
+                        f"📅 {news.get('date', '')}\n"
+                        f"🔗 {news.get('url', '')}"
+                    )
+
+                # Если есть ещё — предлагаем подгрузить
+                if len(news_list) >= NEWS_LIMIT:
+                    await message_or_query.answer(
+                        "Нажмите, чтобы получить ещё персонализированные новости:",
+                        reply_markup=types.InlineKeyboardMarkup(inline_keyboard=[
+                            [types.InlineKeyboardButton(text="Получить ещё", callback_data=f"more_personal_{page + 1}")]
+                        ])
+                    )
+                else:
+                    await message_or_query.answer("✅ Это все персонализированные новости.")
+        except Exception as e:
+            await message_or_query.answer(f"❌ Ошибка при получении персонализированных новостей: {e}")
+
+
+# ---------------------------
+# Callback "Получить ещё" для персонализированных новостей
+# ---------------------------
+@dp.callback_query(lambda c: c.data and c.data.startswith("more_personal_"))
+async def more_personal_news_callback(query: types.CallbackQuery):
+    user_id = query.from_user.id
+    page = int(query.data.replace("more_personal_", ""))
+
+    await send_personalized_news(user_id, query.message, page)
+    await query.answer()
+# ---------------------------
 # Обработка текстовых сообщений
 # ---------------------------
 @dp.message()
@@ -614,76 +683,7 @@ async def process_text(message: types.Message):
     # --- Если бот не ждёт никакого ввода ---
     await message.answer("💡 Для работы с ботом, пожалуйста, используйте кнопки меню ниже 😊")
 
-# ---------------------------
-# Получить персонализированные новости
-# ---------------------------
-@dp.message(lambda message: message.text == "Получить персонализированные новости")
-async def get_personalized_news(message: types.Message):
-    user_id = message.from_user.id
-    page = user_pages.get(user_id, 1)
 
-    await send_personalized_news(user_id, message, page=page)
-
-
-# ---------------------------
-# Функция отправки персонализированных новостей
-# ---------------------------
-async def send_personalized_news(user_id: int, message_or_query, page: int = 1):
-    params = {
-        "id": user_id,
-        "limit": NEWS_LIMIT,
-        "page": page
-    }
-
-    async with aiohttp.ClientSession() as session:
-        try:
-            async with session.get(f"{API_URL.rstrip('/')}/news/recommendations", params=params, timeout=10) as resp:
-                data = await resp.json()
-
-                if not data.get("success", True):
-                    await message_or_query.answer("❌ Ошибка при получении персонализированных новостей: " + data.get("message", "Неизвестная ошибка"))
-                    return
-
-                news_list = data.get("result", [])
-                if not news_list:
-                    await message_or_query.answer("⚠️ Персонализированных новостей больше нет.")
-                    return
-
-                user_pages[user_id] = page
-
-                # Отправляем новости
-                for news in news_list:
-                    await message_or_query.answer(
-                        f"📌 [{news.get('category', 'Без категории')}] {news.get('title', 'Без заголовка')} ({news.get('source', '')})\n"
-                        f"{news.get('summary', '')}\n"
-                        f"📅 {news.get('date', '')}\n"
-                        f"🔗 {news.get('url', '')}"
-                    )
-
-                # Если есть ещё — предлагаем подгрузить
-                if len(news_list) >= NEWS_LIMIT:
-                    await message_or_query.answer(
-                        "Нажмите, чтобы получить ещё персонализированные новости:",
-                        reply_markup=types.InlineKeyboardMarkup(inline_keyboard=[
-                            [types.InlineKeyboardButton(text="Получить ещё", callback_data=f"more_personal_{page + 1}")]
-                        ])
-                    )
-                else:
-                    await message_or_query.answer("✅ Это все персонализированные новости.")
-        except Exception as e:
-            await message_or_query.answer(f"❌ Ошибка при получении персонализированных новостей: {e}")
-
-
-# ---------------------------
-# Callback "Получить ещё" для персонализированных новостей
-# ---------------------------
-@dp.callback_query(lambda c: c.data and c.data.startswith("more_personal_"))
-async def more_personal_news_callback(query: types.CallbackQuery):
-    user_id = query.from_user.id
-    page = int(query.data.replace("more_personal_", ""))
-
-    await send_personalized_news(user_id, query.message, page)
-    await query.answer()
 
 # ---------------------------
 # Запуск
