@@ -12,7 +12,7 @@ interface ToastProps {
   duration?: number;
 }
 
-export function Toast({ show, onClose, title, message, type = 'error', duration = 5000 }: ToastProps) {
+export function Toast({ show, onClose, title, message, type = 'error', duration = 3000 }: ToastProps) {
   useEffect(() => {
     if (show && duration > 0) {
       const timer = setTimeout(onClose, duration);

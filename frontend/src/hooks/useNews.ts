@@ -4,7 +4,7 @@ import { useApi } from './useApi';
 export interface NewsFilters {
   category: string[] | null;
   source: string[] | null;
-  search: string;
+  search: string | null;
   start_date: string | null;
   end_date: string | null;
   page: number | null;

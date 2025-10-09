@@ -6,7 +6,7 @@ type Props = {
   onClick: () => void;
   disabled?: boolean;
   loading?: boolean;
-  active?: boolean; // Показывает, активен ли сейчас режим рекомендаций
+  active?: boolean;
 };
 
 export function RecommendedNewsButton({ onClick, disabled, loading, active }: Props) {
@@ -16,8 +16,8 @@ export function RecommendedNewsButton({ onClick, disabled, loading, active }: Pr
       disabled={disabled || loading}
       className={`${classes.button} ${loading ? classes.loading : ''} ${active ? classes.active : ''}`}
     >
-      {!loading && <IconSparkles className={classes.icon} />}
-      {loading ? 'Загрузка...' : 'Показать рекомендуемые новости'}
+      <IconSparkles className={classes.icon} />
+      Показать рекомендуемые новости
     </button>
   );
 }

@@ -24,9 +24,11 @@
   border-radius: 8px;
   position: relative;
   color: #1a365d !important;
+
   &:hover {
     box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
   }
+
   &:focus {
     border-color: #3182ce;
     box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
@@ -41,4 +43,9 @@
 
 .input:focus + .section {
   color: #3182ce;
+}
+
+.changed {
+  background-color: #fff8dc !important;
+  transition: background-color 0.4s ease !important;
 }

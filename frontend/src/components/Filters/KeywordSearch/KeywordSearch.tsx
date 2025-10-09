@@ -1,10 +1,23 @@
+import { useEffect, useState } from 'react';
 import { TextInput } from '@mantine/core';
 import { IconSearch } from '@tabler/icons-react';
 import classes from './KeywordSearch.module.scss';
 
-type Props = { value?: string; onChange: (v: string) => void; disabled: boolean };
+type Props = {
+  value?: string;
+  onChange: (v: string) => void;
+  disabled: boolean;
+  savedValue?: string;
+};
 
-export function KeywordSearch({ value, onChange, disabled }: Props) {
+export function KeywordSearch({ value, onChange, disabled, savedValue }: Props) {
+  const [isChanged, setIsChanged] = useState(false);
+
+  useEffect(() => {
+    if (value !== savedValue) setIsChanged(true);
+    else setIsChanged(false);
+  }, [value, savedValue]);
+
   return (
     <TextInput
       label={
@@ -21,7 +34,7 @@ export function KeywordSearch({ value, onChange, disabled }: Props) {
       withAsterisk={false}
       classNames={{
         root: classes.root,
-        input: classes.input,
+        input: `${classes.input} ${isChanged ? classes.changed : ''}`,
         section: classes.section,
       }}
     />
