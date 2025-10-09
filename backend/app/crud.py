@@ -15,6 +15,7 @@ from app.models import (
     UserHistory, UserHistoryCreate,
     NewsVector, NewsVectorCreate
 )
+from app.core.config import settings
 
 
 def create_source(*, session: Session, source_create: SourceCreate) -> Source:
@@ -220,7 +221,7 @@ def create_news_vector(session: Session, vector_data: NewsVectorCreate) -> NewsV
 
 # -------------------------------
  
-def get_news_vectors(session: Session, limit: int) -> List[Entity]:
+def get_news_vectors(session: Session, limit: int, page: int) -> List[Entity]:
     query = (
         select(
             ProcessedNews.id,
@@ -229,6 +230,7 @@ def get_news_vectors(session: Session, limit: int) -> List[Entity]:
         )
         .join(NewsVector, ProcessedNews.id == NewsVector.news_id)
         .order_by(ProcessedNews.published_at.desc())
+        .offset((page - 1) * limit)
         .limit(limit)
     )
     
@@ -267,11 +269,16 @@ def get_user_vectors(session: Session, user_id: int) -> List[Entity]:
         for row in results
     ]
 
-def get_recommendeted_news(session: Session, user_id: int, limit: int) -> List[ProcessedNews]:
-    recommender = NewsRecommender()
+def get_recommendeted_news(session: Session, user_id: int, limit: int, page: int) -> List[ProcessedNews]:
+    recommender = NewsRecommender(
+        vector_size=settings.VECTOR_SIZE,
+        freshness_weight=settings.FRESHNESS_WEIGHT,
+        decay_factor=settings.DECAY_FACTOR,
+    )
     
-    news_vectors = get_news_vectors(session, limit)
     user_vectors = get_user_vectors(session, user_id)
+    coef = settings.LIMIT_COEF if any(user_vectors) else 1
+    news_vectors = get_news_vectors(session, coef * limit, page)
 
     result = recommender.get_recommendations(news_vectors, user_vectors, n=limit)
 
@@ -293,7 +300,11 @@ def create_vectors_for_unprocessed_news(
     results = session.exec(unprocessed_news_query).all()
     
     created_count = 0
-    news_recommender = NewsRecommender()
+    news_recommender = NewsRecommender(
+        vector_size=settings.VECTOR_SIZE,
+        freshness_weight=settings.FRESHNESS_WEIGHT,
+        decay_factor=settings.DECAY_FACTOR,
+    )
     for news, category, source in results:
         try:
             vector = news_recommender.create_news_vector(
