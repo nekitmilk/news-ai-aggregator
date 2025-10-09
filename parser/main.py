@@ -73,6 +73,10 @@ class RunParser:
                 n["source_type"] = "telegram" if "t.me" in n.get("url", "") else "rss"
                 header_key = n["header"]
 
+                if self.redis_client.exists(header_key):
+                    print(f"[SKIP] {resource}: новость '{header_key}' уже существует в Redis, пропускаем")
+                    continue
+
                 news_json = json.dumps(n, ensure_ascii=False, indent=4, default=json_serializer)
                 self.redis_client.set(header_key, news_json)
 
