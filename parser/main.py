@@ -6,12 +6,15 @@ import schedule
 import threading
 import redis
 import pika
+from fake_useragent import UserAgent
 from datetime import datetime
 from parser import Parser
 
 class RunParser:
-    def __init__(self, conf: dict):
+    def __init__(self, conf: dict, random_user_agent: bool = True):
         self.conf = conf
+        self.conf['headers']['UserAgent'] = UserAgent().random if random_user_agent else self.conf['headers']['UserAgent']
+
         self.parser: Parser = Parser(
             headers=self.conf["parser"]["headers"],
             resources=self.conf["parser"]["resources"],
@@ -37,9 +40,20 @@ class RunParser:
         self.rabbit_channel = self.rabbit_connection.channel()
         self.rabbit_channel.queue_declare(queue=self.conf["rabbitmq"]["queue"], durable=True)
 
-    def write_resource_news(self, resource):
+    def run(self):
+        scheduler_thread = threading.Thread(target=self._run_scheduler)
+        scheduler_thread.daemon = True
+        scheduler_thread.start()
+
         try:
-            # создаем отдельное соединение для каждого потока
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("Основная программа завершается.")
+            schedule.clear()
+
+    def _write_resource_news(self, resource):
+        try:
             rabbit_connection = pika.BlockingConnection(
                 pika.ConnectionParameters(
                     host=self.conf["rabbitmq"]["host"],
@@ -78,14 +92,7 @@ class RunParser:
         except Exception as e:
             raise Exception(f"write_resource_news:{resource}: {e}")
 
-
-    def run_parser_in_thread(self, resource):
-        thread = threading.Thread(target=self.write_resource_news,
-                                args=(resource,))
-        thread.daemon = True
-        thread.start()
-
-    def run_scheduler(self):
+    def _run_scheduler(self):
         base_interval = self.conf['parser']['periodicity']
         
         for resource in self.parser.resources:
@@ -93,31 +100,27 @@ class RunParser:
             interval = base_interval + random.uniform(-variance, variance)
             
             def job(r=resource):
-                self.run_parser_in_thread(r)
+                self._run_parser_in_thread(r)
             
-            self.run_parser_in_thread(resource)
+            self._run_parser_in_thread(resource)
             schedule.every(round(interval)).minutes.do(job)
 
         while True:
             schedule.run_pending()
             time.sleep(1)
-    
-    def run(self):
-        scheduler_thread = threading.Thread(target=self.run_scheduler)
-        scheduler_thread.daemon = True
-        scheduler_thread.start()
 
-        try:
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            print("Основная программа завершается.")
-            schedule.clear()
+    def _run_parser_in_thread(self, resource):
+        thread = threading.Thread(target=self._write_resource_news,
+                                args=(resource,))
+        thread.daemon = True
+        thread.start()
+
 
 def json_serializer(obj):
     if isinstance(obj, datetime):
         return obj.isoformat()
     raise TypeError(f"Type {type(obj)} not serializable")
+
 
 if __name__ == "__main__":
     with open("config.json", 'r', encoding='utf-8') as file:
