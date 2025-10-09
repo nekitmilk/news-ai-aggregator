@@ -21,6 +21,7 @@ def get_recommendations(
     session: SessionDep,
     user_id: int = Query(..., description="Telegram User ID"),
     limit: int = Query(10, ge=1, le=50),
+    page: int = Query(1, ge=0),
 ):
     """
     Get personalized news recommendations for Telegram user
@@ -32,7 +33,7 @@ def get_recommendations(
                 detail="User ID is required"
             )
         
-        recommended_news = crud.get_recommendeted_news(session, user_id, limit)
+        recommended_news = crud.get_recommendeted_news(session, user_id, limit, page)
         
         result = []
         for item in recommended_news:
