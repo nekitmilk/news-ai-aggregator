@@ -140,7 +140,7 @@
             }
         },
         "news_limit": 10,
-        "periodicity": 10
+        "periodicity": 30
     },
     "tg_parser": {
         "resourses": [
