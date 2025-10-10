@@ -22,16 +22,10 @@ export function LoadFiltersButton({ disabled, loading: externalLoading, userId, 
       onError?.('Пользователь не авторизован');
       return;
     }
-    const result = await makeRequest<any[]>('/users/filters/', {
-      method: 'GET',
-      params: {
-        user_id: userId,
-      },
-    });
+    const result = await makeRequest<any[]>(`/users/filters/${userId}`);
     if (result.success && result.data) {
       const filters = result.data;
-      console.log(filters[0]);
-      onFiltersLoad?.(filters[0]);
+      onFiltersLoad?.(filters);
     } else {
       console.error('Ошибка загрузки фильтров:', result.error);
       onError?.(result.error || 'Неизвестная ошибка');

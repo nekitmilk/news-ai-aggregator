@@ -24,7 +24,7 @@ export function Toast({ show, onClose, title, message, type = 'error', duration 
 
   const backgroundColor = {
     error: '#fa5252',
-    success: '#51cf66',
+    success: '#38a169',
     warning: '#fcc419',
   }[type];
 
