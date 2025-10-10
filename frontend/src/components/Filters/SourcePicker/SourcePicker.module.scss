@@ -26,7 +26,11 @@
   align-items: center;
   gap: 8px;
 }
-
+@media (max-width: 492px) {
+  .label {
+    font-size: 14px;
+  }
+}
 .input {
   background: #ffffff;
   border: 1.5px solid #e2e8f0;

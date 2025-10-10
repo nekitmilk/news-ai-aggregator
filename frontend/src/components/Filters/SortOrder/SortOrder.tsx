@@ -19,7 +19,7 @@ export function SortOrder({ value, onChange, disabled }: Props) {
           disabled={disabled}
         >
           <IconSortDescending style={{ width: 20, height: 20 }} />
-          Сначала новые
+          <span className={classes.btnText}>Сначала новые</span>
         </button>
 
         <button
@@ -29,7 +29,7 @@ export function SortOrder({ value, onChange, disabled }: Props) {
           disabled={disabled}
         >
           <IconSortAscending style={{ width: 20, height: 20 }} />
-          Сначала старые
+          <span className={classes.btnText}>Сначала старые</span>
         </button>
       </Group>
     </div>
