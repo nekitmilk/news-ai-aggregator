@@ -11,7 +11,7 @@
     "generate-client": "openapi-ts"
   },
   "dependencies": {
-    "@chakra-ui/react": "^3.27.0",
+    "@chakra-ui/react": "^3.27.1",
     "@mantine/core": "^8.3.2",
     "@mantine/dates": "^8.3.2",
     "@mantine/form": "^8.3.3",
