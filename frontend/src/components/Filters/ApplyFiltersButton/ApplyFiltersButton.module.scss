@@ -76,3 +76,8 @@
     transform: rotate(360deg);
   }
 }
+@media (max-width: 492px) {
+  .button {
+    font-size: 15px !important;
+  }
+}

@@ -73,3 +73,8 @@
   background: linear-gradient(135deg, #ed64a6 0%, #d53f8c 100%) !important;
   box-shadow: 0 4px 15px rgba(237, 100, 166, 0.3) !important;
 }
+@media (max-width: 492px) {
+  .button {
+    height: 40px;
+  }
+}
