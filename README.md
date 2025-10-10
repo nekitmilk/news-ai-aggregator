@@ -111,5 +111,6 @@ News Hunters — это умный агрегатор новостей, кото
 *   **Backend:** Python, FastAPI, SQLAlchemy, Alembic, PostgreSQL
 *   **Frontend:** React, TypeScript
 *   **AI:** Локально развернутая LLM-модель (RuBERT (русскоязычная версия BERT))
+*   **Парсер:** Python, feedparser, newspaper3k
 *   **Инфраструктура:** Redis, RabbitMQ, Docker
 *   **Tg-бот:** Aiogram
