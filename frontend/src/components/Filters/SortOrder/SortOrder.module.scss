@@ -17,7 +17,14 @@
   gap: 8px;
   margin-bottom: 6px;
 }
-
+@media (max-width: 492px) {
+  .label {
+    font-size: 14px;
+  }
+  .btnText {
+    display: none;
+  }
+}
 .button {
   background: #ffffff;
   color: #1a365d;

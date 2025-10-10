@@ -22,7 +22,6 @@ export function useApi() {
         setError(null);
 
         const apiUrl = `${import.meta.env.VITE_API_URL}/api/v1${url}`;
-
         const response = await axios({
           url: apiUrl,
           method,

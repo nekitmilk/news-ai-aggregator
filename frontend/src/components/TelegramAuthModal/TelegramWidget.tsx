@@ -10,6 +10,8 @@ interface TelegramWidgetProps {
 export function TelegramWidget({ botUsername, onAuth, isVisible = true }: TelegramWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [shouldRender, setShouldRender] = useState(isVisible);
+  const [isLoading, setIsLoading] = useState(true);
+  const scriptLoadedRef = useRef(false); 
 
   useEffect(() => {
     if (isVisible) {
@@ -21,16 +23,15 @@ export function TelegramWidget({ botUsername, onAuth, isVisible = true }: Telegr
   }, [isVisible]);
 
   useEffect(() => {
-    if (!containerRef.current || !shouldRender) return;
+    if (!containerRef.current || !shouldRender || scriptLoadedRef.current) return;
 
     const callbackName = `onTelegramAuth_${Date.now()}`;
+    setIsLoading(true);
 
     (window as any)[callbackName] = (user: ITelegramUser) => {
       onAuth(user);
       delete (window as any)[callbackName];
     };
-
-    containerRef.current.innerHTML = '';
 
     const script = document.createElement('script');
     script.async = true;
@@ -41,15 +42,23 @@ export function TelegramWidget({ botUsername, onAuth, isVisible = true }: Telegr
     script.setAttribute('data-request-access', 'write');
     script.setAttribute('data-onauth', `${callbackName}(user)`);
 
+    script.onload = () => {
+      setIsLoading(false);
+      scriptLoadedRef.current = true;
+    };
+
+    script.onerror = () => {
+      setIsLoading(false);
+      console.error('Ошибка загрузки Telegram Widget');
+    };
+
     containerRef.current.appendChild(script);
 
     return () => {
-      if (containerRef.current) {
-        containerRef.current.innerHTML = '';
-      }
       if ((window as any)[callbackName]) {
         delete (window as any)[callbackName];
       }
+      setIsLoading(false);
     };
   }, [botUsername, onAuth, shouldRender]);
 
@@ -71,7 +80,37 @@ export function TelegramWidget({ botUsername, onAuth, isVisible = true }: Telegr
         border: '1px solid #e9ecef',
         opacity: isVisible ? 1 : 0,
         transition: 'opacity 0.3s ease',
+        position: 'relative',
       }}
-    />
+    >
+      {isLoading && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            color: '#6c757d',
+            fontSize: '14px',
+            fontWeight: 500,
+          }}
+        >
+          <div
+            style={{
+              width: '16px',
+              height: '16px',
+              border: '2px solid #e9ecef',
+              borderTop: '2px solid #3b76d9',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+            }}
+          />
+          Загрузка виджета...
+        </div>
+      )}
+    </div>
   );
 }

@@ -29,6 +29,16 @@ user_pages = {}                 # user_id -> текущая страница н�
 
 NEWS_LIMIT = 5  # количество новостей на страницу
 
+def ensure_user_initialized(user_id: int):
+    """Гарантирует, что у пользователя есть все нужные записи в памяти."""
+    user_selected_sources.setdefault(user_id, set())
+    user_sources_cache.setdefault(user_id, [])
+    user_selected_categories.setdefault(user_id, set())
+    user_categories_cache.setdefault(user_id, [])
+    user_keywords.setdefault(user_id, "")
+    user_waiting_keyword.setdefault(user_id, False)
+    user_pages.setdefault(user_id, 1)
+
 # ---------------------------
 # Основная Reply-клавиатура
 # ---------------------------
@@ -135,16 +145,48 @@ def more_news_keyboard(page: int = 2) -> types.InlineKeyboardMarkup:
 # ---------------------------
 @dp.message(Command(commands=["start"]))
 async def cmd_start(message: types.Message):
+    user_id = message.from_user.id
+    ensure_user_initialized(user_id)
+
+    # --- Проверяем, есть ли сохранённые фильтры в бэкенде ---
+    async with aiohttp.ClientSession() as session:
+        headers = {"X-User-ID": str(user_id)}
+        try:
+            async with session.get(f"{API_URL.rstrip('/')}/users/filters/{user_id}", headers=headers, timeout=10) as resp:
+                data = await resp.json()
+                if resp.status != 200 or not data.get("success", True):
+                    # Если фильтров нет, создаём запись с пустыми фильтрами
+                    payload = {
+                        "source": [],
+                        "category": [],
+                        "search": None,
+                        "start_date": None,
+                        "end_date": None,
+                        "sort": "desc"
+                    }
+                    try:
+                        async with session.post(f"{API_URL.rstrip('/')}/users/filters/", json=payload, headers=headers, timeout=10) as post_resp:
+                            # не проверяем результат — делаем тихо
+                            await post_resp.json()
+                    except Exception:
+                        pass  # игнорируем ошибки
+        except Exception:
+            pass  # игнорируем ошибки
+
+    # --- Основной стартовый текст и клавиатура ---
     await message.answer(
         "👋 Привет! Чтобы получать новости по твоим фильтрам или все новости, используй кнопки ниже.",
         reply_markup=main_reply_keyboard()
     )
+
 
 # ---------------------------
 # Нажатие "Задать фильтры"
 # ---------------------------
 @dp.message(lambda message: message.text == "Задать фильтры")
 async def set_filters(message: types.Message):
+    user_id = message.from_user.id
+    ensure_user_initialized(user_id)
     await message.answer(
         "Здесь ты можешь задать фильтры для ленты новостей:",
         reply_markup=filters_inline_keyboard()
@@ -156,6 +198,7 @@ async def set_filters(message: types.Message):
 @dp.message(lambda message: message.text == "Получить новости по фильтрам")
 async def get_filtered_news(message: types.Message):
     user_id = message.from_user.id
+    ensure_user_initialized(user_id)
     await send_news(user_id, message, page=1)
 
 # ---------------------------
@@ -212,7 +255,7 @@ async def get_saved_filters(user_id: int):
             return None, str(e)
 
 # ---------------------------
-# Функция отправки новостей
+# Функция отправки новостей с кнопкой "Получить ещё" и кнопкой "Читать далее"
 # ---------------------------
 async def send_news(user_id: int, message_or_query, page: int = 1):
     source_ids = ",".join(user_selected_sources.get(user_id, []))
@@ -232,31 +275,51 @@ async def send_news(user_id: int, message_or_query, page: int = 1):
             async with session.get(f"{API_URL.rstrip('/')}/news", params=params, timeout=10) as resp:
                 data = await resp.json()
                 if not data.get("success", True):
-                    await message_or_query.answer("Ошибка при получении новостей: " + data.get("message", "Неизвестная ошибка"))
+                    await message_or_query.answer("❌ Ошибка при получении новостей: " + data.get("message", "Неизвестная ошибка"))
                     return
 
                 news_list = data.get("result", [])
                 if not news_list:
-                    await message_or_query.answer("Новостей по выбранным фильтрам больше нет.")
+                    await message_or_query.answer("⚠️ Новостей по выбранным фильтрам больше нет.")
                     return
 
                 user_pages[user_id] = page
 
-                # Отправляем новости по одной
+                # Отправляем новости по одной с кнопкой "Читать далее"
                 for news in news_list:
-                    await message_or_query.answer(
-                        f"📌 [{news.get('category','Без категории')}] {news.get('title','Без заголовка')} ({news.get('source','')})\n"
-                        f"{news.get('summary','')}\n"
-                        f"📅 {news.get('date','')}\n"
-                        f"🔗 {news.get('url','')}"
+                    category = news.get("category", "Без категории")
+                    title = news.get("title", "Без заголовка")
+                    summary = news.get("summary", "")
+                    date = news.get("date", "")
+                    source = news.get("source", "")
+                    url = news.get("url", "")
+
+                    text = (
+                        f"*Категория:* {category}\n"
+                        f"*Источник:* {source}\n"
+                        f"*Дата: {date}\n\n"
+                        f"{title}\n"
+                        f"{summary}"
                     )
 
-                # Если новостей меньше лимита, информируем пользователя
-                if len(news_list) < NEWS_LIMIT:
+                    # Inline-кнопка "Читать далее"
+                    keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+                        [types.InlineKeyboardButton(text="🔗 Перейти к источнику", url=url)]
+                    ])
+
+                    await message_or_query.answer(text, parse_mode="Markdown", reply_markup=keyboard)
+
+                # Кнопка "Получить ещё"
+                if len(news_list) == NEWS_LIMIT:
+                    await message_or_query.answer(
+                        "Нажмите, чтобы получить ещё:",
+                        reply_markup=more_news_keyboard(page + 1)
+                    )
+                else:
                     await message_or_query.answer("✅ Это все новости по вашим фильтрам.")
 
         except Exception as e:
-            await message_or_query.answer(f"Ошибка при получении новостей: {e}")
+            await message_or_query.answer(f"❌ Ошибка при получении новостей: {e}")
 
 # ---------------------------
 # "Получить ещё"
@@ -532,6 +595,7 @@ async def show_saved_filters(message: types.Message):
 @dp.message(lambda message: message.text and "персонализированные" in message.text.lower())
 async def get_personalized_news(message: types.Message):
     user_id = message.from_user.id
+    ensure_user_initialized(user_id)
     page = user_pages.get(user_id, 1)
     await send_personalized_news(user_id, message, page=page)
 
@@ -541,7 +605,7 @@ async def get_personalized_news(message: types.Message):
 # ---------------------------
 async def send_personalized_news(user_id: int, message_or_query, page: int = 1):
     params = {
-        "id": user_id,
+        "user_id": user_id,
         "limit": NEWS_LIMIT,
         "page": page
     }
@@ -557,7 +621,8 @@ async def send_personalized_news(user_id: int, message_or_query, page: int = 1):
 
                 news_list = data.get("result", [])
                 if not news_list:
-                    await message_or_query.answer("⚠️ Персонализированных новостей больше нет.")
+                    # вместо ответа просто вызываем send_news без фильтров
+                    await send_news(user_id, message_or_query, page=1)
                     return
 
                 user_pages[user_id] = page
@@ -601,6 +666,7 @@ async def more_personal_news_callback(query: types.CallbackQuery):
 @dp.message()
 async def process_text(message: types.Message):
     user_id = message.from_user.id
+    ensure_user_initialized(user_id)
     waiting = user_waiting_keyword.get(user_id, False)
 
     # Если бот ждёт ключевое слово, но пришло не текстовое сообщение
