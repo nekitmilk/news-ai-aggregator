@@ -7,7 +7,6 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 
-// Components
 import { CategoryPicker } from './components/Filters/CategoryPicker/CategoryPicker';
 import { SourcePicker } from './components/Filters/SourcePicker/SourcePicker';
 import { DateRangePicker } from './components/Filters/DateRangePicker/DateRangePicker';
@@ -22,11 +21,9 @@ import { LoadFiltersButton } from './components/Filters/LoadFiltersButton/LoadFi
 import { RecommendedNewsButton } from './components/Filters/RecommendedNewsButton/RecommendedNewsButton';
 import { ClearFiltersButton } from './components/Filters/ClearFiltersButton/ClearFiltersButton';
 
-// Hooks and types
 import { useNews, NewsFilters } from './hooks/useNews';
 import { ITelegramUser } from './types/telegram';
 
-// Styles
 import classes from './App.module.scss';
 import './styles/style.scss';
 
@@ -43,14 +40,12 @@ interface NewsItem {
   date: string;
 }
 
-// Constants
 const INITIAL_PAGE = 1;
 const NEWS_LIMIT = 20;
 const SCROLL_THRESHOLD = 400;
 const INFINITE_SCROLL_OFFSET = 200;
 
 export default function App() {
-  // State
   const [news, setNews] = useState<NewsItem[]>([]);
   const [page, setPage] = useState(INITIAL_PAGE);
   const [hasMore, setHasMore] = useState(true);
@@ -60,15 +55,12 @@ export default function App() {
   const [isRecommendedMode, setIsRecommendedMode] = useState(false);
   const [filtersApplied, setFiltersApplied] = useState(true);
 
-  // Hooks
-  const { fetchNews, fetchRecommendedNews, loading, error: newsError } = useNews(); // ✅ Добавлен fetchRecommendedNews
+  const { fetchNews, fetchRecommendedNews, loading, error: newsError } = useNews();
   const [scroll, scrollTo] = useWindowScroll();
   const [showScrollToTop, setShowScrollToTop] = useState(false);
 
-  // Refs
   const isLoadingRef = useRef(false);
 
-  // Form
   const form = useForm({
     initialValues: {
       category: [] as string[],
@@ -80,15 +72,12 @@ export default function App() {
     },
   });
 
-  // Ref для отслеживания изменений фильтров
   const savedValuesRef = useRef(form.values);
 
-  // Функция для обновления savedValues (сбрасывает changed эффект)
   const updateSavedValues = useCallback(() => {
     savedValuesRef.current = { ...form.values };
   }, [form.values]);
 
-  // Scroll handlers
   useEffect(() => {
     setShowScrollToTop(scroll.y > SCROLL_THRESHOLD);
   }, [scroll.y]);
@@ -97,7 +86,6 @@ export default function App() {
     scrollTo({ y: 0 });
   }, [scrollTo]);
 
-  // Authentication
   useEffect(() => {
     const savedUser = localStorage.getItem('telegram_user');
     if (savedUser) {
@@ -124,15 +112,13 @@ export default function App() {
     localStorage.removeItem('telegram_user');
     setIsAuthenticated(false);
     setUser(null);
-    // ✅ При выходе выключаем режим рекомендаций
     setIsRecommendedMode(false);
   }, []);
 
   const handleCloseAuthModal = useCallback(() => setShowAuthModal(false), []);
 
-  // News fetching with improved performance
   const getNewsWithFilters = useCallback(
-    async (filters: Partial<NewsFilters>, isLoadMore = false, currentPage = page) => {
+    async (filters: Partial<NewsFilters>, isLoadMore = false, currentPage = page, needSavedUpd = false) => {
       if (isLoadingRef.current || (isLoadMore && !hasMore)) return;
 
       isLoadingRef.current = true;
@@ -148,65 +134,47 @@ export default function App() {
           limit: NEWS_LIMIT,
           sort: filters.sort ?? form.values.sort,
         };
-        console.log(newsFilters);
         const newNews = await fetchNews(newsFilters);
         setHasMore(newNews.length >= NEWS_LIMIT);
         setNews((prev) => (isLoadMore ? [...prev, ...newNews] : newNews));
-
         if (!isLoadMore) {
           setPage(INITIAL_PAGE);
         }
 
-        // ✅ Сбрасываем changed эффект после успешного запроса
-        updateSavedValues();
+        if (needSavedUpd) updateSavedValues();
       } finally {
         isLoadingRef.current = false;
       }
     },
-    [form.values, fetchNews, page, hasMore, updateSavedValues],
+    [form.values, fetchNews, page, hasMore],
   );
 
-  // Optimized news fetching that uses current form values
   const getNews = useCallback(
-    async (isLoadMore = false, currentPage = page) => {
-      await getNewsWithFilters({}, isLoadMore, currentPage);
+    async (isLoadMore = false, currentPage = page, needSavedUpd = false) => {
+      await getNewsWithFilters({}, isLoadMore, currentPage, needSavedUpd);
     },
     [getNewsWithFilters, page],
   );
+  const userId = useMemo(() => user?.id || 2345, [user]);
 
-  // ✅ Обновленный обработчик рекомендаций
   const handleRecommendedNews = useCallback(async () => {
     const newIsRecommendedMode = !isRecommendedMode;
     setIsRecommendedMode(newIsRecommendedMode);
 
     if (newIsRecommendedMode) {
-      // Включаем режим рекомендаций
-      //   if (!user?.id) {
-      //     console.log('Пользователь не авторизован для рекомендаций');
-      //     return;
-      //   }
+      isLoadingRef.current = true;
+      setPage(INITIAL_PAGE);
 
-      try {
-        isLoadingRef.current = true;
-        setPage(INITIAL_PAGE);
-
-        // ✅ Загружаем рекомендованные новости
-        const recommendedNews = await fetchRecommendedNews(userId, INITIAL_PAGE, NEWS_LIMIT);
-        setNews(recommendedNews);
-        setHasMore(recommendedNews.length >= NEWS_LIMIT);
-      } catch (error) {
-        console.error('Ошибка загрузки рекомендаций:', error);
-      } finally {
-        isLoadingRef.current = false;
-      }
+      const recommendedNews = await fetchRecommendedNews(userId, INITIAL_PAGE, NEWS_LIMIT);
+      setNews(recommendedNews);
+      setHasMore(recommendedNews.length >= NEWS_LIMIT);
+      isLoadingRef.current = false;
     } else {
-      // Выключаем режим рекомендаций - возвращаем обычные новости
       setPage(INITIAL_PAGE);
       getNews(false, INITIAL_PAGE);
     }
-  }, [isRecommendedMode, user?.id, fetchRecommendedNews, getNews]);
+  }, [isRecommendedMode, userId, fetchRecommendedNews, getNews]);
 
-  // Filter handlers
   const handleClearFilters = useCallback(() => {
     const clearedValues = {
       category: [],
@@ -220,46 +188,39 @@ export default function App() {
     setFiltersApplied(false);
   }, [form]);
 
-  // Sort handler with immediate feedback
-
-  // ✅ Обновленный бесконечный скролл
   const handleScroll = useCallback(() => {
-    if (loading || !hasMore || isLoadingRef.current) return;
+    if (isLoadingRef.current || !hasMore) return;
 
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
     const windowHeight = window.innerHeight;
     const documentHeight = document.documentElement.scrollHeight;
-
     if (documentHeight - (scrollTop + windowHeight) < INFINITE_SCROLL_OFFSET) {
-      setPage((prev) => {
-        const nextPage = prev + 1;
+      const nextPage = page + 1;
+      setPage(nextPage);
 
-        if (isRecommendedMode && user?.id) {
-          // ✅ Загружаем следующую страницу рекомендаций
-          fetchRecommendedNews(user.id, nextPage, NEWS_LIMIT).then((newNews) => {
+      if (isRecommendedMode && userId) {
+        isLoadingRef.current = true;
+        fetchRecommendedNews(userId, nextPage, NEWS_LIMIT)
+          .then((newNews) => {
             setNews((prevNews) => [...prevNews, ...newNews]);
             setHasMore(newNews.length >= NEWS_LIMIT);
+            isLoadingRef.current = false;
+          })
+          .catch(() => {
+            isLoadingRef.current = false;
           });
-        } else {
-          // Обычные новости
-          getNews(true, nextPage);
-        }
-        return nextPage;
-      });
+      } else {
+        getNewsWithFilters({}, true, nextPage);
+      }
     }
-  }, [loading, hasMore, getNews, isRecommendedMode, user?.id, fetchRecommendedNews]);
+  }, [page, hasMore, isRecommendedMode, userId, fetchRecommendedNews, getNewsWithFilters]);
 
-  // Memoized values
   const isFiltersEmpty = useMemo(() => {
     const { category, source, search, start_date, end_date } = form.values;
     return category.length === 0 && source.length === 0 && search === '' && start_date === '' && end_date === '';
   }, [form.values]);
 
-  const userId = useMemo(() => user?.id || 2345, [user]);
-
-  // ✅ Обновленная функция проверки изменений фильтров
   const hasFiltersChanged = useMemo(() => {
-    // Если фильтры еще не применялись, считаем что есть изменения
     if (!filtersApplied) return true;
 
     const currentValues = form.values;
@@ -275,26 +236,21 @@ export default function App() {
     );
   }, [form.values, filtersApplied]);
 
-  // ✅ Обновленный handleApplyFilters
   const handleApplyFilters = useCallback(() => {
-    // Проверяем, изменились ли фильтры
     if (!hasFiltersChanged) {
-      console.log('Фильтры не изменились, запрос не отправляется');
       return;
     }
 
     setPage(INITIAL_PAGE);
-    getNews(false, INITIAL_PAGE);
+    getNews(false, INITIAL_PAGE, true);
     setFiltersApplied(true);
   }, [getNews, hasFiltersChanged]);
 
-  // Effects
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
-  // Initial news load
   useEffect(() => {
     getNews(false, INITIAL_PAGE);
   }, []);
@@ -391,10 +347,7 @@ export default function App() {
                     </div>
                     <div className={classes.buttonContainer}>
                       <ClearFiltersButton onClear={handleClearFilters} disabled={isFiltersEmpty || isRecommendedMode} />
-                      <ApplyFiltersButton
-                        onClick={handleApplyFilters}
-                        disabled={loading || isRecommendedMode || !hasFiltersChanged}
-                      />
+                      <ApplyFiltersButton onClick={handleApplyFilters} disabled={loading || isRecommendedMode} />
                     </div>
                   </Group>
 
@@ -430,7 +383,7 @@ export default function App() {
                     </Group>
                     <RecommendedNewsButton
                       onClick={handleRecommendedNews}
-                      disabled={loading} // ✅ Блокируем если не авторизован
+                      disabled={loading}
                       active={isRecommendedMode}
                     />
                   </Group>
@@ -458,7 +411,11 @@ export default function App() {
                   userId={userId}
                 />
               ))}
-
+              {news.length === 0 && !loading && !newsError && (
+                <Paper className={classes.emptyState}>
+                  <div className={classes.emptyText}>Новости не найдены. Измените параметры фильтрации.</div>
+                </Paper>
+              )}
               {!hasMore && news.length > 0 && (
                 <Paper className={classes.endState}>
                   <div className={classes.endText}>Вы просмотрели все новости</div>
