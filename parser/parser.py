@@ -1,9 +1,14 @@
 import re
+import random
+import logging
 import asyncio
 import feedparser
 from newspaper import Article
 from datetime import datetime
 from telethon import TelegramClient
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class Parser:
     def __init__(self, headers: dict = None, resources: dict = None):
@@ -13,7 +18,9 @@ class Parser:
         self.resources = resources or {}
 
     async def get_news(self, resource: str, limit: int = 10) -> list[dict]:
+        logger.info(f"Starting news parsing for resource: {resource}, limit: {limit}")
         if resource not in self.resources:
+            logger.error(f"Resource {resource} not found in configuration")
             raise ValueError(f"get_news:{resource} не найден в конфигурации")
 
         config = self.resources[resource]
@@ -21,35 +28,44 @@ class Parser:
 
         try:
             if 'rss' in config:
+                logger.debug(f"Parsing RSS for {resource}")
                 news_data = await self._parse_rss_news(resource, limit)
             else:
+                logger.error(f"No RSS feed specified for {resource}")
                 raise ValueError(f"get_news:Для {resource} не указан RSS")
             return news_data[:limit]
 
         except Exception as e:
+            logger.error(f"Failed to parse news for {resource}: {str(e)}", exc_info=True)
             raise Exception(f"get_news:{resource}: {e}")
 
     async def _parse_rss_news(self, resource: str, limit: int) -> list[dict]:
         config = self.resources[resource]
+        logger.debug(f"Fetching RSS feed: {config['rss']}")
         feed = feedparser.parse(config['rss'], request_headers=self.headers)
         
         tasks = []
         for entry in feed.entries[:limit]:
+            logger.debug(f"Queuing article parsing for URL: {entry.link}")
             tasks.append(self._parse_news_article(entry.link))
+            await asyncio.sleep(random.uniform(1, 3))
         
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
         news_data = [{**result, "sourse": resource, "sourse_type": "web"} for result in results if isinstance(result, dict)]
+        logger.info(f"Parsed {len(news_data)} valid articles from {len(tasks)} RSS entries for {resource}")        
         return news_data
 
     async def _parse_news_article(self, url: str):
+        logger.debug(f"Parsing article: {url}")
         try:
             loop = asyncio.get_event_loop()
             article_data = await loop.run_in_executor(None, self._parse_article_sync, url)
             
             if not article_data or not article_data.get('header'):
+                logger.warning(f"No valid data parsed for article: {url}")
                 return None
-
+            logger.debug(f"Successfully parsed article: {url}")
             return {
                 'header': article_data['header'],
                 'text': article_data['text'],
@@ -58,20 +74,26 @@ class Parser:
             }
 
         except Exception as e:
-            print(f"_parse_news_article:{url}: {e}")
+            logger.error(f"Error parsing article {url}: {str(e)}", exc_info=True)
             return None
 
     def _parse_article_sync(self, url: str):
+        logger.debug(f"Synchronous parsing of article: {url}")
         try:
             article = Article(url)
             article.download()
             article.parse()
+
+            if 'Доступ к чату заблокирован' in article.html:
+                logger.error("Block detected for URL %s: Chat access blocked", url)
+                return None
             
             if not article.title or not article.text:
+                logger.warning(f"Article {url} has no title or text")
                 return None
 
             publish_date = self._extract_publication_date(article, url)
-            
+            logger.debug(f"Extracted publication date {publish_date} for article {url}")
             return {
                 'header': article.title,
                 'text': article.text,
@@ -79,7 +101,7 @@ class Parser:
             }
 
         except Exception as e:
-            print(f"_parse_article_sync:{url}: {e}")
+            logger.error(f"Error in synchronous parsing of {url}: {str(e)}", exc_info=True)
             return None
 
     def _extract_publication_date(self, article, url: str) -> datetime:

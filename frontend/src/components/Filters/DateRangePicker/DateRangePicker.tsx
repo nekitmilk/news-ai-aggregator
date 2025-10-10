@@ -1,6 +1,6 @@
 import { DateInput } from '@mantine/dates';
 import { Group } from '@mantine/core';
-import { IconCalendar, IconCalendarEvent } from '@tabler/icons-react';
+import { IconCalendarPlus, IconCalendarMinus } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import classes from './DateRangePicker.module.scss';
 import '@mantine/dates/styles.css';
@@ -8,12 +8,22 @@ import '@mantine/dates/styles.css';
 type Props = {
   startDate?: string;
   endDate?: string;
+  savedStartDate?: string;
+  savedEndDate?: string;
   onStartChange: (v: string) => void;
   onEndChange: (v: string) => void;
   disabled: boolean;
 };
 
-export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange, disabled }: Props) {
+export function DateRangePicker({
+  startDate,
+  endDate,
+  savedStartDate,
+  savedEndDate,
+  onStartChange,
+  onEndChange,
+  disabled,
+}: Props) {
   const filterInput = (event: React.KeyboardEvent<HTMLInputElement>) => {
     const allowedKeys = [
       '0',
@@ -36,55 +46,37 @@ export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange
       'ArrowUp',
       'ArrowDown',
     ];
-
-    if (!allowedKeys.includes(event.key)) {
-      event.preventDefault();
-    }
+    if (!allowedKeys.includes(event.key)) event.preventDefault();
   };
 
-  const getDateValue = (dateString: string | undefined): Date | null => {
+  const getDateValue = (dateString?: string): Date | null => {
     if (!dateString) return null;
-
-    if (dateString.includes('-') || dateString.includes('.')) {
-      const separator = dateString.includes('-') ? '-' : '.';
-      const [day, month, year] = dateString.split(separator);
-      if (day && month && year) {
-        const date = new Date(`${year}-${month}-${day}`);
-        return isNaN(date.getTime()) ? null : date;
-      }
-    }
-    const date = new Date(dateString);
-    return isNaN(date.getTime()) ? null : date;
+    const separator = dateString.includes('-') ? '-' : dateString.includes('.') ? '.' : null;
+    if (!separator) return new Date(dateString);
+    const [day, month, year] = dateString.split(separator);
+    const parsed = new Date(`${year}-${month}-${day}`);
+    return isNaN(parsed.getTime()) ? null : parsed;
   };
 
-  const getMinDate = (): Date | undefined => {
-    if (!startDate) return undefined;
-    return getDateValue(startDate) || undefined;
-  };
+  const start = getDateValue(startDate);
+  const end = getDateValue(endDate);
 
-  const getMaxDate = (): Date | undefined => {
-    if (!endDate) return undefined;
-    return getDateValue(endDate) || undefined;
-  };
+  const isStartChanged = startDate !== savedStartDate;
+  const isEndChanged = endDate !== savedEndDate;
 
   return (
     <Group className={classes.container}>
       <DateInput
         label={
           <div className={classes.label}>
-            <IconCalendar style={{ width: 20, height: 20 }} />
+            <IconCalendarPlus style={{ width: 20, height: 20 }} />
             Начальная дата
           </div>
         }
         placeholder="дд.мм.гггг"
-        value={getDateValue(startDate)}
+        value={start}
         onChange={(date) => {
-          if (date) {
-            const formatted = dayjs(date).format('DD-MM-YYYY');
-            onStartChange(formatted);
-          } else {
-            onStartChange('');
-          }
+          onStartChange(date ? dayjs(date).format('DD-MM-YYYY') : '');
         }}
         onKeyDown={filterInput}
         radius="md"
@@ -93,7 +85,7 @@ export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange
         locale="ru"
         classNames={{
           root: classes.datePicker,
-          input: classes.dateInput,
+          input: `${classes.dateInput} ${isStartChanged ? classes.changed : ''}`,
           label: classes.label,
           day: classes.day,
         }}
@@ -102,26 +94,21 @@ export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange
             dropdown: classes.calendarDropdown,
           },
         }}
-        maxDate={getMaxDate()}
+        maxDate={end || undefined}
         allowDeselect
         clearable
       />
       <DateInput
         label={
           <div className={classes.label}>
-            <IconCalendarEvent style={{ width: 20, height: 20 }} />
+            <IconCalendarMinus style={{ width: 20, height: 20 }} />
             Конечная дата
           </div>
         }
         placeholder="дд.мм.гггг"
-        value={getDateValue(endDate)}
+        value={end}
         onChange={(date) => {
-          if (date) {
-            const formatted = dayjs(date).format('DD-MM-YYYY');
-            onEndChange(formatted);
-          } else {
-            onEndChange('');
-          }
+          onEndChange(date ? dayjs(date).format('DD-MM-YYYY') : '');
         }}
         onKeyDown={filterInput}
         radius="md"
@@ -130,7 +117,7 @@ export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange
         disabled={disabled}
         classNames={{
           root: classes.datePicker,
-          input: classes.dateInput,
+          input: `${classes.dateInput} ${isEndChanged ? classes.changed : ''}`,
           label: classes.label,
           day: classes.day,
         }}
@@ -139,7 +126,7 @@ export function DateRangePicker({ startDate, endDate, onStartChange, onEndChange
             dropdown: classes.calendarDropdown,
           },
         }}
-        minDate={getMinDate()}
+        minDate={start || undefined}
         allowDeselect
         clearable
       />

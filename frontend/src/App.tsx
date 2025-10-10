@@ -1,5 +1,13 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { MantineProvider, Group, Stack, Paper, AppShell, Affix, Transition, Button } from '@mantine/core';
+import { useForm } from '@mantine/form';
+import { useWindowScroll } from '@mantine/hooks';
+import { IconArrowUp } from '@tabler/icons-react';
+import dayjs from 'dayjs';
+import 'dayjs/locale/ru';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+
+// Components
 import { CategoryPicker } from './components/Filters/CategoryPicker/CategoryPicker';
 import { SourcePicker } from './components/Filters/SourcePicker/SourcePicker';
 import { DateRangePicker } from './components/Filters/DateRangePicker/DateRangePicker';
@@ -9,17 +17,18 @@ import { SortOrder } from './components/Filters/SortOrder/SortOrder';
 import { NewsBlock } from './components/News/NewsBlock';
 import { Header } from './components/Header/Header';
 import { TelegramAuthModal } from './components/TelegramAuthModal/TelegramAuthModal';
-import classes from './App.module.scss';
-import dayjs from 'dayjs';
-import 'dayjs/locale/ru';
-import './styles/style.scss';
-import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { SaveFiltersButton } from './components/Filters/SaveFiltersButton/SaveFiltersButton';
 import { LoadFiltersButton } from './components/Filters/LoadFiltersButton/LoadFiltersButton';
 import { RecommendedNewsButton } from './components/Filters/RecommendedNewsButton/RecommendedNewsButton';
+import { ClearFiltersButton } from './components/Filters/ClearFiltersButton/ClearFiltersButton';
+
+// Hooks and types
 import { useNews, NewsFilters } from './hooks/useNews';
-import { useWindowScroll } from '@mantine/hooks';
-import { IconArrowUp } from '@tabler/icons-react';
+import { ITelegramUser } from './types/telegram';
+
+// Styles
+import classes from './App.module.scss';
+import './styles/style.scss';
 
 dayjs.locale('ru');
 dayjs.extend(customParseFormat);
@@ -34,75 +43,75 @@ interface NewsItem {
   date: string;
 }
 
-export interface ITelegramUser {
-  id: number;
-  first_name: string;
-  last_name?: string;
-  username?: string;
-  photo_url?: string;
-  auth_date: number;
-  hash: string;
-}
-
-declare global {
-  interface Window {
-    onTelegramAuth: (user: ITelegramUser) => void;
-  }
-}
+// Constants
+const INITIAL_PAGE = 1;
+const NEWS_LIMIT = 20;
+const SCROLL_THRESHOLD = 400;
+const INFINITE_SCROLL_OFFSET = 200;
 
 export default function App() {
-  const [category, setCategory] = useState<string[]>([]);
-  const [source, setSource] = useState<string[]>([]);
-  const [keyword, setKeyword] = useState<string>('');
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
-  const [sort, setSort] = useState<string>('desc');
+  // State
   const [news, setNews] = useState<NewsItem[]>([]);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(INITIAL_PAGE);
   const [hasMore, setHasMore] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<ITelegramUser | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isRecommendedMode, setIsRecommendedMode] = useState(false);
+  const [filtersApplied, setFiltersApplied] = useState(true);
+
+  // Hooks
+  const { fetchNews, fetchRecommendedNews, loading, error: newsError } = useNews(); // ✅ Добавлен fetchRecommendedNews
   const [scroll, scrollTo] = useWindowScroll();
   const [showScrollToTop, setShowScrollToTop] = useState(false);
 
-  // Эффект для показа/скрытия кнопки скролла вверх
+  // Refs
+  const isLoadingRef = useRef(false);
+
+  // Form
+  const form = useForm({
+    initialValues: {
+      category: [] as string[],
+      source: [] as string[],
+      search: '',
+      start_date: '',
+      end_date: '',
+      sort: 'desc',
+    },
+  });
+
+  // Ref для отслеживания изменений фильтров
+  const savedValuesRef = useRef(form.values);
+
+  // Функция для обновления savedValues (сбрасывает changed эффект)
+  const updateSavedValues = useCallback(() => {
+    savedValuesRef.current = { ...form.values };
+  }, [form.values]);
+
+  // Scroll handlers
   useEffect(() => {
-    setShowScrollToTop(scroll.y > 400); // Показывать кнопку когда скролл больше 400px
+    setShowScrollToTop(scroll.y > SCROLL_THRESHOLD);
   }, [scroll.y]);
 
-  // Функция для скролла вверх
   const scrollToTop = useCallback(() => {
     scrollTo({ y: 0 });
   }, [scrollTo]);
-  const { fetchNews, loading, error: newsError } = useNews();
 
-  // Используем useRef для отслеживания состояния загрузки
-  const isLoadingRef = useRef(false);
-
-  // Проверка авторизации при загрузке
+  // Authentication
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = useCallback(() => {
     const savedUser = localStorage.getItem('telegram_user');
     if (savedUser) {
       try {
-        const userData = JSON.parse(savedUser);
+        const userData = JSON.parse(savedUser) as ITelegramUser;
         setIsAuthenticated(true);
         setUser(userData);
-      } catch (error) {
-        console.error('Error parsing saved user data:', error);
+      } catch {
         localStorage.removeItem('telegram_user');
       }
     }
   }, []);
 
-  const handleTelegramClick = useCallback(() => {
-    setShowAuthModal(true);
-  }, []);
+  const handleTelegramClick = useCallback(() => setShowAuthModal(true), []);
 
   const handleAuthSuccess = useCallback((userData: ITelegramUser) => {
     localStorage.setItem('telegram_user', JSON.stringify(userData));
@@ -115,83 +124,105 @@ export default function App() {
     localStorage.removeItem('telegram_user');
     setIsAuthenticated(false);
     setUser(null);
+    // ✅ При выходе выключаем режим рекомендаций
+    setIsRecommendedMode(false);
   }, []);
 
-  const handleCloseAuthModal = useCallback(() => {
-    setShowAuthModal(false);
-  }, []);
+  const handleCloseAuthModal = useCallback(() => setShowAuthModal(false), []);
 
-  const handleLoadSavedFilters = useCallback(() => {
-    const savedFilters = localStorage.getItem('saved_filters');
-    if (savedFilters) {
-      try {
-        const filters = JSON.parse(savedFilters);
-        setCategory(filters.category || []);
-        setSource(filters.source || []);
-        setKeyword(filters.keyword || '');
-        setStartDate(filters.startDate || '');
-        setEndDate(filters.endDate || '');
-        setSort(filters.sort || 'desc');
-      } catch (error) {
-        console.error('Error loading saved filters:', error);
-      }
-    }
-  }, []);
-
-  const handleRecommendedNews = useCallback(() => {
-    setIsRecommendedMode((prev) => !prev);
-  }, []);
-
-  // Вынесем getNews из зависимостей
-  const getNews = useCallback(
-    async (isLoadMore = false, currentPage = page) => {
+  // News fetching with improved performance
+  const getNewsWithFilters = useCallback(
+    async (filters: Partial<NewsFilters>, isLoadMore = false, currentPage = page) => {
       if (isLoadingRef.current || (isLoadMore && !hasMore)) return;
 
       isLoadingRef.current = true;
 
-      const filters: NewsFilters = {
-        category: category.length > 0 ? category : null,
-        source: source.length > 0 ? source : null,
-        search: keyword,
-        start_date: startDate || null,
-        end_date: endDate || null,
-        page: isLoadMore ? currentPage : 1,
-        limit: 20,
-        sort,
-      };
-
       try {
-        const newNews = await fetchNews(filters);
+        const newsFilters: NewsFilters = {
+          category: filters.category ?? (form.values.category.length ? form.values.category : null),
+          source: filters.source ?? (form.values.source.length ? form.values.source : null),
+          search: filters.search ?? (form.values.search || null),
+          start_date: filters.start_date ?? (form.values.start_date || null),
+          end_date: filters.end_date ?? (form.values.end_date || null),
+          page: isLoadMore ? currentPage : INITIAL_PAGE,
+          limit: NEWS_LIMIT,
+          sort: filters.sort ?? form.values.sort,
+        };
+        console.log(newsFilters);
+        const newNews = await fetchNews(newsFilters);
+        setHasMore(newNews.length >= NEWS_LIMIT);
+        setNews((prev) => (isLoadMore ? [...prev, ...newNews] : newNews));
 
-        if (newNews.length < 20) {
-          setHasMore(false);
-        } else {
-          setHasMore(true);
+        if (!isLoadMore) {
+          setPage(INITIAL_PAGE);
         }
 
-        if (isLoadMore) {
-          setNews((prev) => [...prev, ...newNews]);
-        } else {
-          setNews(newNews);
-          if (!isLoadMore) {
-            setPage(1);
-          }
-          setHasMore(true);
-        }
-      } catch (error) {
-        console.error('Error fetching news:', error);
+        // ✅ Сбрасываем changed эффект после успешного запроса
+        updateSavedValues();
       } finally {
         isLoadingRef.current = false;
       }
     },
-    [category, source, keyword, startDate, endDate, sort, hasMore, fetchNews],
+    [form.values, fetchNews, page, hasMore, updateSavedValues],
   );
 
-  const handleApplyFilters = useCallback(() => {
-    setPage(1);
-    getNews(false, 1);
-  }, [getNews]);
+  // Optimized news fetching that uses current form values
+  const getNews = useCallback(
+    async (isLoadMore = false, currentPage = page) => {
+      await getNewsWithFilters({}, isLoadMore, currentPage);
+    },
+    [getNewsWithFilters, page],
+  );
 
+  // ✅ Обновленный обработчик рекомендаций
+  const handleRecommendedNews = useCallback(async () => {
+    const newIsRecommendedMode = !isRecommendedMode;
+    setIsRecommendedMode(newIsRecommendedMode);
+
+    if (newIsRecommendedMode) {
+      // Включаем режим рекомендаций
+      //   if (!user?.id) {
+      //     console.log('Пользователь не авторизован для рекомендаций');
+      //     return;
+      //   }
+
+      try {
+        isLoadingRef.current = true;
+        setPage(INITIAL_PAGE);
+
+        // ✅ Загружаем рекомендованные новости
+        const recommendedNews = await fetchRecommendedNews(userId, INITIAL_PAGE, NEWS_LIMIT);
+        setNews(recommendedNews);
+        setHasMore(recommendedNews.length >= NEWS_LIMIT);
+      } catch (error) {
+        console.error('Ошибка загрузки рекомендаций:', error);
+      } finally {
+        isLoadingRef.current = false;
+      }
+    } else {
+      // Выключаем режим рекомендаций - возвращаем обычные новости
+      setPage(INITIAL_PAGE);
+      getNews(false, INITIAL_PAGE);
+    }
+  }, [isRecommendedMode, user?.id, fetchRecommendedNews, getNews]);
+
+  // Filter handlers
+  const handleClearFilters = useCallback(() => {
+    const clearedValues = {
+      category: [],
+      source: [],
+      search: '',
+      start_date: '',
+      end_date: '',
+    };
+
+    form.setValues(clearedValues);
+    setFiltersApplied(false);
+  }, [form]);
+
+  // Sort handler with immediate feedback
+
+  // ✅ Обновленный бесконечный скролл
   const handleScroll = useCallback(() => {
     if (loading || !hasMore || isLoadingRef.current) return;
 
@@ -199,54 +230,80 @@ export default function App() {
     const windowHeight = window.innerHeight;
     const documentHeight = document.documentElement.scrollHeight;
 
-    if (documentHeight - (scrollTop + windowHeight) < 200) {
+    if (documentHeight - (scrollTop + windowHeight) < INFINITE_SCROLL_OFFSET) {
       setPage((prev) => {
         const nextPage = prev + 1;
-        getNews(true, nextPage);
+
+        if (isRecommendedMode && user?.id) {
+          // ✅ Загружаем следующую страницу рекомендаций
+          fetchRecommendedNews(user.id, nextPage, NEWS_LIMIT).then((newNews) => {
+            setNews((prevNews) => [...prevNews, ...newNews]);
+            setHasMore(newNews.length >= NEWS_LIMIT);
+          });
+        } else {
+          // Обычные новости
+          getNews(true, nextPage);
+        }
         return nextPage;
       });
     }
-  }, [loading, hasMore, getNews]);
+  }, [loading, hasMore, getNews, isRecommendedMode, user?.id, fetchRecommendedNews]);
 
+  // Memoized values
+  const isFiltersEmpty = useMemo(() => {
+    const { category, source, search, start_date, end_date } = form.values;
+    return category.length === 0 && source.length === 0 && search === '' && start_date === '' && end_date === '';
+  }, [form.values]);
+
+  const userId = useMemo(() => user?.id || 2345, [user]);
+
+  // ✅ Обновленная функция проверки изменений фильтров
+  const hasFiltersChanged = useMemo(() => {
+    // Если фильтры еще не применялись, считаем что есть изменения
+    if (!filtersApplied) return true;
+
+    const currentValues = form.values;
+    const savedValues = savedValuesRef.current;
+
+    return (
+      JSON.stringify(currentValues.category) !== JSON.stringify(savedValues.category) ||
+      JSON.stringify(currentValues.source) !== JSON.stringify(savedValues.source) ||
+      currentValues.search !== savedValues.search ||
+      currentValues.start_date !== savedValues.start_date ||
+      currentValues.end_date !== savedValues.end_date ||
+      currentValues.sort !== savedValues.sort
+    );
+  }, [form.values, filtersApplied]);
+
+  // ✅ Обновленный handleApplyFilters
+  const handleApplyFilters = useCallback(() => {
+    // Проверяем, изменились ли фильтры
+    if (!hasFiltersChanged) {
+      console.log('Фильтры не изменились, запрос не отправляется');
+      return;
+    }
+
+    setPage(INITIAL_PAGE);
+    getNews(false, INITIAL_PAGE);
+    setFiltersApplied(true);
+  }, [getNews, hasFiltersChanged]);
+
+  // Effects
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
+  // Initial news load
   useEffect(() => {
-    setPage(1);
-  }, [category, source, keyword, startDate, endDate, sort]);
-
-  useEffect(() => {
-    getNews(false, 1);
-  }, []);
-
-  const handleSaveSuccess = useCallback(() => {}, []);
-
-  const handleSaveError = useCallback((error: string) => {
-    console.error('Ошибка сохранения фильтров:', error);
-  }, []);
-
-  const handleFiltersLoad = useCallback((loadedFilters: any) => {
-    setCategory(loadedFilters.category || []);
-    setSource(loadedFilters.source || []);
-    setKeyword(loadedFilters.keyword || '');
-    setStartDate(loadedFilters.startDate || '');
-    setEndDate(loadedFilters.endDate || '');
-    setSort(loadedFilters.sort || 'desc');
-  }, []);
-
-  const handleLoadError = useCallback((error: string) => {
-    console.error('Ошибка загрузки фильтров:', error);
+    getNews(false, INITIAL_PAGE);
   }, []);
 
   return (
     <MantineProvider
       theme={{
         fontFamily: 'Montserrat, sans-serif',
-        headings: {
-          fontFamily: 'Montserrat, sans-serif',
-        },
+        headings: { fontFamily: 'Montserrat, sans-serif' },
       }}
     >
       <AppShell header={{ height: 70 }}>
@@ -275,6 +332,7 @@ export default function App() {
               )}
             </Transition>
           </Affix>
+
           <TelegramAuthModal
             isOpen={showAuthModal}
             onClose={handleCloseAuthModal}
@@ -284,105 +342,122 @@ export default function App() {
 
           <section className={classes.section}>
             <Paper className={classes.paper}>
-              <Stack>
-                <Group className={classes.filterRow}>
-                  <div className={classes.filterItem}>
-                    <CategoryPicker value={category} onChange={setCategory} disabled={isRecommendedMode} />
-                  </div>
-                  <div className={classes.filterItem}>
-                    <SourcePicker value={source} onChange={setSource} disabled={isRecommendedMode} />
-                  </div>
-                  <div className={classes.filterItem}>
-                    <KeywordSearch value={keyword} onChange={setKeyword} disabled={isRecommendedMode} />
-                  </div>
-                </Group>
-
-                <Group className={classes.filterRow}>
-                  <div className={classes.dateContainer}>
-                    <DateRangePicker
-                      startDate={startDate}
-                      endDate={endDate}
-                      onStartChange={setStartDate}
-                      onEndChange={setEndDate}
-                      disabled={isRecommendedMode}
-                    />
-                  </div>
-                  <div className={classes.sortOrderWrapper}>
-                    <SortOrder value={sort} onChange={setSort} disabled={isRecommendedMode} />
-                  </div>
-                  <div className={classes.buttonContainer}>
-                    <ApplyFiltersButton onClick={handleApplyFilters} disabled={loading || isRecommendedMode} />
-                  </div>
-                </Group>
-
-                {isAuthenticated && (
+              <form onSubmit={form.onSubmit(handleApplyFilters)}>
+                <Stack>
                   <Group className={classes.filterRow}>
-                    <div className={classes.filterActionsContainer}>
-                      <Group>
-                        <SaveFiltersButton
-                          onClick={handleApplyFilters}
-                          disabled={loading || isRecommendedMode}
-                          filters={{
-                            category,
-                            source,
-                            keyword,
-                            startDate,
-                            endDate,
-                            sort,
-                          }}
-                          userId={user?.id || null}
-                          onSuccess={handleSaveSuccess}
-                          onError={handleSaveError}
-                        />
-                        <LoadFiltersButton
-                          onClick={handleLoadSavedFilters}
-                          disabled={loading || isRecommendedMode}
-                          userId={user?.id || null}
-                          onFiltersLoad={handleFiltersLoad}
-                          onError={handleLoadError}
-                        />
-                      </Group>
-                      <RecommendedNewsButton
-                        onClick={handleRecommendedNews}
-                        disabled={loading}
-                        active={isRecommendedMode}
+                    <div className={classes.filterItem}>
+                      <CategoryPicker
+                        value={form.values.category}
+                        onChange={(v) => form.setFieldValue('category', v)}
+                        disabled={isRecommendedMode}
+                        savedValue={savedValuesRef.current.category}
+                      />
+                    </div>
+                    <div className={classes.filterItem}>
+                      <SourcePicker
+                        value={form.values.source}
+                        onChange={(v) => form.setFieldValue('source', v)}
+                        disabled={isRecommendedMode}
+                        savedValue={savedValuesRef.current.source}
+                      />
+                    </div>
+                    <div className={classes.filterItem}>
+                      <KeywordSearch
+                        value={form.values.search}
+                        onChange={(v) => form.setFieldValue('search', v)}
+                        disabled={isRecommendedMode}
+                        savedValue={savedValuesRef.current.search}
                       />
                     </div>
                   </Group>
-                )}
-              </Stack>
+                  <Group className={classes.filterRow}>
+                    <div className={classes.dateContainer}>
+                      <DateRangePicker
+                        startDate={form.values.start_date}
+                        endDate={form.values.end_date}
+                        savedStartDate={savedValuesRef.current.start_date}
+                        savedEndDate={savedValuesRef.current.end_date}
+                        onStartChange={(v) => form.setFieldValue('start_date', v)}
+                        onEndChange={(v) => form.setFieldValue('end_date', v)}
+                        disabled={isRecommendedMode}
+                      />
+                    </div>
+                    <div className={classes.sortOrderWrapper}>
+                      <SortOrder
+                        value={form.values.sort}
+                        onChange={(v) => form.setFieldValue('sort', v)}
+                        disabled={isRecommendedMode}
+                      />
+                    </div>
+                    <div className={classes.buttonContainer}>
+                      <ClearFiltersButton onClear={handleClearFilters} disabled={isFiltersEmpty || isRecommendedMode} />
+                      <ApplyFiltersButton
+                        onClick={handleApplyFilters}
+                        disabled={loading || isRecommendedMode || !hasFiltersChanged}
+                      />
+                    </div>
+                  </Group>
+
+                  <Group className={classes.filterRow}>
+                    <Group>
+                      <SaveFiltersButton
+                        disabled={isFiltersEmpty || loading || isRecommendedMode || !hasFiltersChanged}
+                        filters={form.values}
+                        userId={userId}
+                        onSuccess={() => {}}
+                        onError={(e) => console.error(e)}
+                      />
+                      <LoadFiltersButton
+                        disabled={loading || isRecommendedMode}
+                        userId={userId}
+                        onFiltersLoad={(filters) => {
+                          const cleanedFilters = Object.fromEntries(
+                            Object.entries(filters).filter(
+                              ([_, value]) =>
+                                value !== '' &&
+                                value !== null &&
+                                value !== undefined &&
+                                !(Array.isArray(value) && value.length === 0),
+                            ),
+                          );
+
+                          form.setValues(cleanedFilters);
+                          updateSavedValues();
+                          setFiltersApplied(false);
+                        }}
+                        onError={(e) => console.error(e)}
+                      />
+                    </Group>
+                    <RecommendedNewsButton
+                      onClick={handleRecommendedNews}
+                      disabled={loading} // ✅ Блокируем если не авторизован
+                      active={isRecommendedMode}
+                    />
+                  </Group>
+                </Stack>
+              </form>
             </Paper>
 
             <Stack className={classes.newsList}>
               {newsError && (
-                <Paper className={classes.errorState}>
-                  <div className={classes.errorText}>Ошибка загрузки новостей</div>
+                <Paper className={classes.emptyState}>
+                  <div className={classes.emptyText}>Ошибка загрузки новостей</div>
                 </Paper>
               )}
 
-              {news.map((item, idx) => (
+              {news.map((item) => (
                 <NewsBlock
-                  key={`${item.id}-${idx}`}
+                  key={item.id}
+                  id={item.id}
                   name={item.title}
                   description={item.summary}
                   category={item.category}
                   source={item.source}
                   date={item.date}
                   url={item.url}
+                  userId={userId}
                 />
               ))}
-
-              {loading && (
-                <Paper className={classes.loadingState}>
-                  <div className={classes.loadingText}>Загрузка новостей...</div>
-                </Paper>
-              )}
-
-              {news.length === 0 && !loading && !newsError && (
-                <Paper className={classes.emptyState}>
-                  <div className={classes.emptyText}>Новости не найдены. Измените параметры фильтрации.</div>
-                </Paper>
-              )}
 
               {!hasMore && news.length > 0 && (
                 <Paper className={classes.endState}>

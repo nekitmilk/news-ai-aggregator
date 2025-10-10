@@ -4,7 +4,7 @@ import { useApi } from './useApi';
 export interface NewsFilters {
   category: string[] | null;
   source: string[] | null;
-  search: string;
+  search: string | null;
   start_date: string | null;
   end_date: string | null;
   page: number | null;
@@ -41,9 +41,25 @@ export function useNews() {
     },
     [makeRequest],
   );
+  const fetchRecommendedNews = useCallback(
+    async (userId: number, page: number = 1, limit: number = 20) => {
+      const result = await makeRequest<NewsItem[]>('/recommendations/', {
+        method: 'GET',
+        params: {
+          user_id: userId,
+          page,
+          limit,
+        },
+      });
+
+      return result.success ? result.data || [] : [];
+    },
+    [makeRequest],
+  );
 
   return {
     fetchNews,
+    fetchRecommendedNews,
     loading,
     error,
     clearError,

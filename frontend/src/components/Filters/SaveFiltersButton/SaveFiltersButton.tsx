@@ -5,15 +5,14 @@ import { Toast } from '@/components/common/ToastNotify/ToastNotify';
 import { useState } from 'react';
 
 type Props = {
-  onClick?: () => void;
   disabled?: boolean;
   loading?: boolean;
   filters: {
     category: string[];
     source: string[];
-    keyword: string;
-    startDate: string;
-    endDate: string;
+    search: string;
+    start_date: string;
+    end_date: string;
     sort: string;
   };
   userId: number | null;
@@ -46,42 +45,29 @@ export function SaveFiltersButton({ disabled, loading: externalLoading, filters,
   };
 
   const handleSaveFilters = async () => {
-    if (!userId) {
-      showToast('error', 'Ошибка', 'Пользователь не авторизован');
-      onError?.('Пользователь не авторизован');
-      return;
-    }
+    const filterData = {
+      category: filters.category,
+      source: filters.source,
+      search: filters.search,
+      start_date: filters.start_date,
+      end_date: filters.end_date,
+      sort: filters.sort,
+    };
 
-    try {
-      const filterData = {
-        category: filters.category,
-        source: filters.source,
-        search: filters.keyword,
-        start_date: filters.startDate,
-        end_date: filters.endDate,
-        sort: filters.sort,
-      };
+    const result = await makeRequest('/users/filters/', {
+      method: 'POST',
+      data: filterData,
+      headers: {
+        'X-User-ID': userId,
+      },
+    });
 
-      const result = await makeRequest('/users/filters/', {
-        method: 'POST',
-        data: filterData,
-        headers: {
-          'X-User-ID': userId.toString(),
-        },
-      });
-
-      if (result.success) {
-        showToast('success', 'Успех', 'Фильтры успешно сохранены');
-        onSuccess?.(result.data);
-        localStorage.setItem('saved_filters', JSON.stringify(filters));
-      } else {
-        showToast('error', 'Ошибка', 'Не удалось сохранить фильтры');
-        onError?.(result.error || 'Неизвестная ошибка');
-      }
-    } catch (err) {
-      const errorMessage = 'Неизвестная ошибка';
+    if (result.success) {
+      showToast('success', 'Успех', 'Фильтры успешно сохранены');
+      onSuccess?.(result.data);
+    } else {
       showToast('error', 'Ошибка', 'Не удалось сохранить фильтры');
-      onError?.(errorMessage);
+      onError?.(result.error || 'Неизвестная ошибка');
     }
   };
 
@@ -89,12 +75,11 @@ export function SaveFiltersButton({ disabled, loading: externalLoading, filters,
     <>
       <button
         onClick={handleSaveFilters}
-        disabled={disabled || isLoading || !userId}
+        disabled={disabled || isLoading}
         className={`${classes.button} ${isLoading ? classes.loading : ''}`}
-        title={!userId ? 'Требуется авторизация' : undefined}
       >
-        {!isLoading && <IconFilterDown className={classes.icon} />}
-        {isLoading ? 'Сохранение...' : 'Сохранить фильтры'}
+        <IconFilterDown className={classes.icon} />
+        Сохранить фильтры
       </button>
 
       <Toast
@@ -103,7 +88,7 @@ export function SaveFiltersButton({ disabled, loading: externalLoading, filters,
         title={toast.title}
         message={toast.message}
         type={toast.type}
-        duration={5000}
+        duration={3000}
       />
     </>
   );

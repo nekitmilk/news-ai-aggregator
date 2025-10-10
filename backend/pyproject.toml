@@ -24,6 +24,7 @@ dependencies = [
     "aio-pika>=9.5.7",
     "python-dateutil>=2.9.0.post0",
     "pytz>=2025.2",
+    "numpy>=1.24.0",
 ]
 
 [tool.uv]

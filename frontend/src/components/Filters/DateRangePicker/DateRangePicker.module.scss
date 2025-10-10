@@ -1,5 +1,5 @@
 .container {
-  gap: 16px;
+  gap: 10px !important;
   align-items: flex-end;
 }
 
@@ -28,13 +28,12 @@
     background: #fafbfc;
   }
 }
-
 .label {
   display: flex;
-  align-items: center;
+  align-items: center !important;
   gap: 8px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 15px;
   color: #1a365d;
 }
 
@@ -94,5 +93,18 @@
   }
   &[data-in-range] {
     background-color: #e7f5ff;
+  }
+}
+.changed {
+  background-color: #fff8dc !important;
+  transition: background-color 0.3s ease !important;
+}
+.mantine-InputClearButton-root {
+  color: #e67700 !important;
+  background-color: rgba(255, 212, 59, 0.3) !important;
+
+  &:hover {
+    color: #f08c00 !important;
+    background-color: rgba(255, 212, 59, 0.4) !important;
   }
 }
