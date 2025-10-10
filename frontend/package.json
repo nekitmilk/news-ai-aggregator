@@ -22,7 +22,7 @@
     "clsx": "^2.1.1",
     "dayjs": "^1.11.18",
     "form-data": "4.0.4",
-    "framer-motion": "^12.23.22",
+    "framer-motion": "^12.23.24",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-error-boundary": "^6.0.0",
