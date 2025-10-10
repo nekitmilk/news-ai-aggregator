@@ -13,7 +13,8 @@ from parser import Parser
 class RunParser:
     def __init__(self, conf: dict, random_user_agent: bool = True):
         self.conf = conf
-        self.conf['headers']['UserAgent'] = UserAgent().random if random_user_agent else self.conf['headers']['UserAgent']
+        self.conf['parser']['headers']['User-Agent'] = UserAgent().random if random_user_agent \
+            else self.conf['parser']['headers']['User-Agent']
 
         self.parser: Parser = Parser(
             headers=self.conf["parser"]["headers"],

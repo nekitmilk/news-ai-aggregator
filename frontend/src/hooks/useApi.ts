@@ -21,8 +21,8 @@ export function useApi() {
         setLoading(true);
         setError(null);
 
-        const apiUrl = `/api/api/v1${url}`;
-        console.log(data, headers, params);
+        const apiUrl = `${import.meta.env.VITE_API_URL}/api/v1${url}`;
+
         const response = await axios({
           url: apiUrl,
           method,
