@@ -26,6 +26,7 @@ import { ITelegramUser } from './types/telegram';
 
 import classes from './App.module.scss';
 import './styles/style.scss';
+import { useApi } from './hooks/useApi';
 
 dayjs.locale('ru');
 dayjs.extend(customParseFormat);
@@ -73,6 +74,7 @@ export default function App() {
   });
 
   const savedValuesRef = useRef(form.values);
+  const { makeRequest } = useApi();
 
   const updateSavedValues = useCallback(() => {
     savedValuesRef.current = { ...form.values };
@@ -100,13 +102,36 @@ export default function App() {
   }, []);
 
   const handleTelegramClick = useCallback(() => setShowAuthModal(true), []);
+  const handleAuthSuccess = useCallback(
+    async (userData: ITelegramUser) => {
+      localStorage.setItem('telegram_user', JSON.stringify(userData));
+      setUser(userData);
+      setIsAuthenticated(true);
+      setShowAuthModal(false);
 
-  const handleAuthSuccess = useCallback((userData: ITelegramUser) => {
-    localStorage.setItem('telegram_user', JSON.stringify(userData));
-    setUser(userData);
-    setIsAuthenticated(true);
-    setShowAuthModal(false);
-  }, []);
+      const result = await makeRequest<any[]>(`/users/filters/${userData.id}`);
+
+      if (!result.success || !result.data || result.data.length === 0) {
+        const emptyFilters = {
+          category: [],
+          source: [],
+          search: '',
+          start_date: '',
+          end_date: '',
+          sort: 'desc',
+        };
+
+        await makeRequest('/users/filters/', {
+          method: 'POST',
+          data: emptyFilters,
+          headers: {
+            'X-User-ID': userData.id,
+          },
+        });
+      }
+    },
+    [makeRequest],
+  );
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem('telegram_user');
@@ -155,12 +180,15 @@ export default function App() {
     },
     [getNewsWithFilters, page],
   );
-  const userId = useMemo(() => user?.id || 2345, [user]);
+  const userId = useMemo(() => {
+    if (user?.id) return user.id;
+    return null;
+  }, [user]);
 
   const handleRecommendedNews = useCallback(async () => {
     const newIsRecommendedMode = !isRecommendedMode;
     setIsRecommendedMode(newIsRecommendedMode);
-
+    if (!userId) return;
     if (newIsRecommendedMode) {
       isLoadingRef.current = true;
       setPage(INITIAL_PAGE);
@@ -351,42 +379,44 @@ export default function App() {
                     </div>
                   </Group>
 
-                  <Group className={classes.filterRow}>
-                    <Group>
-                      <SaveFiltersButton
-                        disabled={isFiltersEmpty || loading || isRecommendedMode || !hasFiltersChanged}
-                        filters={form.values}
-                        userId={userId}
-                        onSuccess={() => {}}
-                        onError={(e) => console.error(e)}
-                      />
-                      <LoadFiltersButton
-                        disabled={loading || isRecommendedMode}
-                        userId={userId}
-                        onFiltersLoad={(filters) => {
-                          const cleanedFilters = Object.fromEntries(
-                            Object.entries(filters).filter(
-                              ([_, value]) =>
-                                value !== '' &&
-                                value !== null &&
-                                value !== undefined &&
-                                !(Array.isArray(value) && value.length === 0),
-                            ),
-                          );
+                  {userId ? (
+                    <Group className={classes.filterRow}>
+                      <Group>
+                        <SaveFiltersButton
+                          disabled={isFiltersEmpty || loading || isRecommendedMode || !hasFiltersChanged}
+                          filters={form.values}
+                          userId={userId}
+                          onSuccess={() => {}}
+                          onError={(e) => console.error(e)}
+                        />
+                        <LoadFiltersButton
+                          disabled={loading || isRecommendedMode}
+                          userId={userId}
+                          onFiltersLoad={(filters) => {
+                            const cleanedFilters = Object.fromEntries(
+                              Object.entries(filters).filter(
+                                ([_, value]) =>
+                                  value !== '' &&
+                                  value !== null &&
+                                  value !== undefined &&
+                                  !(Array.isArray(value) && value.length === 0),
+                              ),
+                            );
 
-                          form.setValues(cleanedFilters);
-                          updateSavedValues();
-                          setFiltersApplied(false);
-                        }}
-                        onError={(e) => console.error(e)}
+                            form.setValues(cleanedFilters);
+                            updateSavedValues();
+                            setFiltersApplied(false);
+                          }}
+                          onError={(e) => console.error(e)}
+                        />
+                      </Group>
+                      <RecommendedNewsButton
+                        onClick={handleRecommendedNews}
+                        disabled={loading}
+                        active={isRecommendedMode}
                       />
                     </Group>
-                    <RecommendedNewsButton
-                      onClick={handleRecommendedNews}
-                      disabled={loading}
-                      active={isRecommendedMode}
-                    />
-                  </Group>
+                  ) : null}
                 </Stack>
               </form>
             </Paper>
