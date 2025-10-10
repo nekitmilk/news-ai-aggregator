@@ -255,7 +255,7 @@ async def get_saved_filters(user_id: int):
             return None, str(e)
 
 # ---------------------------
-# Функция отправки новостей
+# Функция отправки новостей с кнопкой "Получить ещё" и кнопкой "Читать далее"
 # ---------------------------
 async def send_news(user_id: int, message_or_query, page: int = 1):
     source_ids = ",".join(user_selected_sources.get(user_id, []))
@@ -275,31 +275,51 @@ async def send_news(user_id: int, message_or_query, page: int = 1):
             async with session.get(f"{API_URL.rstrip('/')}/news", params=params, timeout=10) as resp:
                 data = await resp.json()
                 if not data.get("success", True):
-                    await message_or_query.answer("Ошибка при получении новостей: " + data.get("message", "Неизвестная ошибка"))
+                    await message_or_query.answer("❌ Ошибка при получении новостей: " + data.get("message", "Неизвестная ошибка"))
                     return
 
                 news_list = data.get("result", [])
                 if not news_list:
-                    await message_or_query.answer("Новостей по выбранным фильтрам больше нет.")
+                    await message_or_query.answer("⚠️ Новостей по выбранным фильтрам больше нет.")
                     return
 
                 user_pages[user_id] = page
 
-                # Отправляем новости по одной
+                # Отправляем новости по одной с кнопкой "Читать далее"
                 for news in news_list:
-                    await message_or_query.answer(
-                        f"📌 [{news.get('category','Без категории')}] {news.get('title','Без заголовка')} ({news.get('source','')})\n"
-                        f"{news.get('summary','')}\n"
-                        f"📅 {news.get('date','')}\n"
-                        f"🔗 {news.get('url','')}"
+                    category = news.get("category", "Без категории")
+                    title = news.get("title", "Без заголовка")
+                    summary = news.get("summary", "")
+                    date = news.get("date", "")
+                    source = news.get("source", "")
+                    url = news.get("url", "")
+
+                    text = (
+                        f"*Категория:* {category}\n"
+                        f"*Источник:* {source}\n"
+                        f"*Дата: {date}\n\n"
+                        f"{title}\n"
+                        f"{summary}"
                     )
 
-                # Если новостей меньше лимита, информируем пользователя
-                if len(news_list) < NEWS_LIMIT:
+                    # Inline-кнопка "Читать далее"
+                    keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
+                        [types.InlineKeyboardButton(text="🔗 Перейти к источнику", url=url)]
+                    ])
+
+                    await message_or_query.answer(text, parse_mode="Markdown", reply_markup=keyboard)
+
+                # Кнопка "Получить ещё"
+                if len(news_list) == NEWS_LIMIT:
+                    await message_or_query.answer(
+                        "Нажмите, чтобы получить ещё:",
+                        reply_markup=more_news_keyboard(page + 1)
+                    )
+                else:
                     await message_or_query.answer("✅ Это все новости по вашим фильтрам.")
 
         except Exception as e:
-            await message_or_query.answer(f"Ошибка при получении новостей: {e}")
+            await message_or_query.answer(f"❌ Ошибка при получении новостей: {e}")
 
 # ---------------------------
 # "Получить ещё"
