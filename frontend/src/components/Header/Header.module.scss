@@ -6,6 +6,8 @@
   z-index: 100;
   width: 100vw;
   left: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
 }
 
 .headerContainer {
@@ -16,6 +18,13 @@
   width: 100%;
   max-width: 1200px !important;
   padding: 0 20px 0 10px !important;
+  margin: 0 auto;
+}
+
+.logo {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
 }
 
 .logoText {
@@ -27,6 +36,7 @@
   letter-spacing: -0.5px;
   font-size: 20px !important;
   user-select: none;
+  white-space: nowrap;
 }
 
 .telegramButton {
@@ -37,9 +47,7 @@
     box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
   }
 }
-.logo {
-  gap: 5px !important;
-}
+
 .authButton {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -66,6 +74,7 @@
 .menuItem {
   transition: all 0.2s ease;
 }
+
 .username {
   color: #64748b !important;
   &:hover {
@@ -73,18 +82,94 @@
     cursor: default;
   }
 }
+
 .logout {
   color: #fa5252 !important;
   &:hover {
-    background-color: #fa5252;
+    background-color: #fa5252 !important;
     color: white !important;
   }
 }
+
 .botButton {
   font-weight: 600;
   transition: all 0.3s ease;
 
   &:hover {
     box-shadow: 0 4px 12px rgba(0, 136, 204, 0.2);
+  }
+}
+
+@media (max-width: 1200px) {
+  .headerContainer {
+    max-width: 100% !important;
+    padding: 0 20px !important;
+  }
+
+  .logoText {
+    font-size: 18px !important;
+  }
+
+}
+
+/* 2️⃣ Планшеты (до 992px) */
+@media (max-width: 992px) {
+  .header {
+    padding: 10px 0 !important;
+  }
+
+
+
+  .logoText {
+    font-size: 18px !important;
+    text-align: center !important;
+  }
+
+  .telegramButton,
+  .authButton,
+  .botButton {
+    font-size: 0.9rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .logoText {
+    font-size: 16px !important;
+  }
+
+  .telegramButton,
+  .authButton,
+  .botButton {
+    width: auto !important;
+    font-size: 0.8rem !important;
+    padding: 0 5px !important;
+  }
+}
+
+
+@media (max-width: 492px) {
+  .header {
+    padding: 8px 0 !important;
+  }
+
+  .logoText {
+    font-size: 15px !important;
+  }
+  .headerContainer {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+  .telegramButton,
+  .authButton,
+  .botButton {
+    width: auto !important;
+    font-size: 0.85rem !important;
+    padding: 5px 10px 5px 15px !important;
+  }
+  .telegramButtonLabel,
+  .authButtonLabel,
+  .botButtonLabel {
+    display: none !important;
   }
 }
