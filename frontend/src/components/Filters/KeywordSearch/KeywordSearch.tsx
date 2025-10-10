@@ -19,7 +19,7 @@ export function KeywordSearch({ value = '', onChange, disabled, savedValue }: Pr
       if (localValue !== value) {
         onChange(localValue);
       }
-    }, 300); // Задержка 300ms
+    }, 300); 
 
     return () => clearTimeout(timer);
   }, [localValue, onChange, value]);
