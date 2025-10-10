@@ -50,7 +50,10 @@ export function Header({ onTelegramClick, isAuthenticated, user, onLogout }: Hea
               color="#0088cc"
               radius="md"
               size="md"
-              className={classes.botButton}
+              classNames={{
+                root: classes.botButton,
+                label: classes.botButtonLabel,
+              }}
             >
               Telegram Bot
             </Button>
@@ -72,7 +75,10 @@ export function Header({ onTelegramClick, isAuthenticated, user, onLogout }: Hea
                     radius="md"
                     size="md"
                     leftSection={user?.photo_url ? <Avatar src={user.photo_url} size={26} radius="xl" /> : null}
-                    className={classes.authButton}
+                    classNames={{
+                      root: classes.authButton,
+                      label: classes.authButtonLabel,
+                    }}
                   >
                     {getUserDisplayName()}
                   </Button>
@@ -96,7 +102,10 @@ export function Header({ onTelegramClick, isAuthenticated, user, onLogout }: Hea
                 radius="md"
                 size="md"
                 onClick={onTelegramClick}
-                className={classes.telegramButton}
+                classNames={{
+                  root: classes.telegramButton,
+                  label: classes.telegramButtonLabel,
+                }}
               >
                 Авторизация
               </Button>

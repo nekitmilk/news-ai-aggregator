@@ -301,7 +301,7 @@ export default function App() {
         </AppShell.Header>
 
         <AppShell.Main className={classes.main}>
-          <Affix position={{ bottom: 20, right: 20 }}>
+          <Affix position={{ bottom: 20, right: 10 }}>
             <Transition transition="slide-up" mounted={showScrollToTop}>
               {(transitionStyles) => (
                 <Button
@@ -311,7 +311,7 @@ export default function App() {
                   className={classes.scrollToTopButton}
                   size="md"
                 >
-                  Наверх
+                  <span className={classes.scrollBtnText}>Наверх</span>
                 </Button>
               )}
             </Transition>
@@ -381,7 +381,7 @@ export default function App() {
 
                   {userId ? (
                     <Group className={classes.filterRow}>
-                      <Group>
+                      <Group className={classes.filterButtons}>
                         <SaveFiltersButton
                           disabled={isFiltersEmpty || loading || isRecommendedMode || !hasFiltersChanged}
                           filters={form.values}

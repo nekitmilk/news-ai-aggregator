@@ -30,6 +30,7 @@
   justify-content: center;
   z-index: 1000;
 }
+
 .filterActionsContainer {
   display: flex;
   justify-content: space-between !important;
@@ -108,6 +109,7 @@
     pointer-events: none;
   }
 }
+
 .section {
   margin: 0 auto;
   width: 1200px;
@@ -150,7 +152,6 @@
 .dateContainer {
   flex: 1;
   align-self: end;
-  //   max-width: 600px;
 }
 
 .buttonContainer {
@@ -176,6 +177,7 @@
 .newsList {
   gap: 16px;
 }
+
 .loadingState {
   display: flex;
   justify-content: center;
@@ -203,4 +205,113 @@
   color: #999;
   font-size: 14px;
   font-style: italic;
+}
+
+@media (max-width: 1200px) {
+  .section {
+    width: 100% !important;
+    padding: 20px 30px !important;
+  }
+
+  .filterRow {
+    flex-wrap: wrap !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .headerContainer {
+    flex-direction: column !important;
+    gap: 10px !important;
+    text-align: center !important;
+  }
+
+  .paper {
+    padding: 20px !important;
+  }
+
+  .dateRow {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .buttonContainer {
+    min-width: 100% !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: 15px !important;
+  }
+
+  .filterActionsContainer {
+    flex-direction: column !important;
+    gap: 10px !important;
+    align-items: stretch !important;
+  }
+
+  .filterRow {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .dateContainer,
+  .sortOrderWrapper {
+    width: 100% !important;
+  }
+
+  .paper {
+    padding: 16px !important;
+    margin-bottom: 24px !important;
+  }
+
+  .header {
+    padding: 10px !important;
+  }
+
+  .logoText {
+    font-size: 20px !important;
+  }
+
+  .authModal {
+    width: 95% !important;
+    padding: 16px !important;
+  }
+}
+
+@media (max-width: 492px) {
+  .logoText {
+    font-size: 18px !important;
+  }
+
+  .paper {
+    padding: 12px !important;
+  }
+  .filterButtons {
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  .buttonContainer {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  .authModal {
+    max-width: 100% !important;
+    padding: 12px !important;
+  }
+
+  .emptyText {
+    font-size: 14px !important;
+  }
+  .scrollToTopButton {
+    padding: 10px 5px 10px 15px !important;
+  }
+  .scrollBtnText {
+    display: none;
+  }
 }
