@@ -1,5 +1,5 @@
-// RecommendedNewsButton.tsx
-import { IconSparkles } from '@tabler/icons-react'; // Иконка для рекомендаций
+import { IconSparkles } from '@tabler/icons-react';
+import { useState, useEffect } from 'react';
 import classes from './RecommendedNewsButton.module.scss';
 
 type Props = {
@@ -10,14 +10,29 @@ type Props = {
 };
 
 export function RecommendedNewsButton({ onClick, disabled, loading, active }: Props) {
+  const [isActuallyDisabled, setIsActuallyDisabled] = useState(disabled);
+
+  useEffect(() => {
+    if (disabled) {
+      setIsActuallyDisabled(true);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setIsActuallyDisabled(false);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [disabled]);
+
   return (
     <button
       onClick={onClick}
-      disabled={disabled || loading}
+      disabled={isActuallyDisabled || loading}
       className={`${classes.button} ${loading ? classes.loading : ''} ${active ? classes.active : ''}`}
     >
       <IconSparkles className={classes.icon} />
-      Показать рекомендуемые новости
+      {active ? 'Скрыть рекомендации' : 'Показать рекомендуемые новости'}
     </button>
   );
 }

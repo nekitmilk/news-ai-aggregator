@@ -1,7 +1,6 @@
-// components/Header/Header.tsx
 import { Group, Container, Button, Text, Menu, Avatar, Modal } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconBrandTelegram, IconNews, IconLogout, IconUserFilled } from '@tabler/icons-react';
+import { IconBrandTelegram, IconNews, IconLogout, IconUserFilled, IconUserCheck } from '@tabler/icons-react';
 import { ITelegramUser } from '../../types/telegram';
 import classes from './Header.module.scss';
 
@@ -41,52 +40,68 @@ export function Header({ onTelegramClick, isAuthenticated, user, onLogout }: Hea
             </Text>
           </Group>
 
-          {isAuthenticated ? (
-            <Menu
-              shadow="md"
-              width={200}
-              position="bottom-end"
-              classNames={{
-                dropdown: classes.menuDropdown,
-                label: classes.menuLabel,
-                item: classes.menuItem,
-              }}
-            >
-              <Menu.Target>
-                <Button
-                  variant="light"
-                  radius="md"
-                  size="md"
-                  leftSection={user?.photo_url ? <Avatar src={user.photo_url} size={26} radius="xl" /> : null}
-                  className={classes.authButton}
-                >
-                  {getUserDisplayName()}
-                </Button>
-              </Menu.Target>
-
-              <Menu.Dropdown>
-                <Menu.Item leftSection={<IconUserFilled size={18} />} className={classes.username}>
-                  {user?.username ? `@${user.username}` : 'Пользователь'}
-                </Menu.Item>
-                <Menu.Divider />
-                <Menu.Item leftSection={<IconLogout size={18} />} onClick={open} className={classes.logout}>
-                  Выйти из аккаунта
-                </Menu.Item>
-              </Menu.Dropdown>
-            </Menu>
-          ) : (
+          <Group gap="sm">
             <Button
+              component="a"
+              href="https://t.me/match_hunters_bot"
+              target="_blank"
               leftSection={<IconBrandTelegram size={22} />}
-              variant="gradient"
-              gradient={{ from: '#0088cc', to: '#24a1de' }}
+              variant="outline"
+              color="#0088cc"
               radius="md"
               size="md"
-              onClick={onTelegramClick}
-              className={classes.telegramButton}
+              className={classes.botButton}
             >
-              Авторизация
+              Telegram Bot
             </Button>
-          )}
+
+            {isAuthenticated ? (
+              <Menu
+                shadow="md"
+                width={200}
+                position="bottom-end"
+                classNames={{
+                  dropdown: classes.menuDropdown,
+                  label: classes.menuLabel,
+                  item: classes.menuItem,
+                }}
+              >
+                <Menu.Target>
+                  <Button
+                    variant="light"
+                    radius="md"
+                    size="md"
+                    leftSection={user?.photo_url ? <Avatar src={user.photo_url} size={26} radius="xl" /> : null}
+                    className={classes.authButton}
+                  >
+                    {getUserDisplayName()}
+                  </Button>
+                </Menu.Target>
+
+                <Menu.Dropdown>
+                  <Menu.Item leftSection={<IconUserFilled size={18} />} className={classes.username}>
+                    {user?.username ? `@${user.username}` : 'Пользователь'}
+                  </Menu.Item>
+                  <Menu.Divider />
+                  <Menu.Item leftSection={<IconLogout size={18} />} onClick={open} className={classes.logout}>
+                    Выйти из аккаунта
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+            ) : (
+              <Button
+                leftSection={<IconUserCheck size={22} />}
+                variant="gradient"
+                gradient={{ from: '#0088cc', to: '#24a1de' }}
+                radius="md"
+                size="md"
+                onClick={onTelegramClick}
+                className={classes.telegramButton}
+              >
+                Авторизация
+              </Button>
+            )}
+          </Group>
         </Group>
       </Container>
 

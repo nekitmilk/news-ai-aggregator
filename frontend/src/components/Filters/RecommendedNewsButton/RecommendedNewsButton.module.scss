@@ -18,7 +18,6 @@
   overflow: hidden;
 
   &:hover:not(:disabled) {
-    transform: translateY(-1px);
     box-shadow: 0 6px 20px rgba(159, 122, 234, 0.3);
     background: linear-gradient(135deg, #805ad5 0%, #6b46c1 100%);
   }

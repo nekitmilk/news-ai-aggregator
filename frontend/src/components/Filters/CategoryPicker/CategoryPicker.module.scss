@@ -5,21 +5,8 @@
 
   &.changed {
     :global(.mantine-MultiSelect-input) {
-      border-color: #ffd43b;
-      background-color: rgba(255, 212, 59, 0.05);
-      box-shadow: 0 0 0 1px #ffd43b;
-    }
-
-    &::before {
-      content: '';
-      position: absolute;
-      left: -4px;
-      top: 0;
-      bottom: 0;
-      width: 3px;
-      background-color: #ffd43b;
-      border-radius: 2px;
-      z-index: 1;
+      background-color: #fff8dc !important;
+      transition: background-color 0.4s ease !important;
     }
   }
 }
