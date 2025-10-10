@@ -5,7 +5,7 @@
 
 .datePicker {
   flex: 1;
-  min-width: 200px;
+  //   min-width: 200px;
 }
 
 .dateInput {
@@ -106,5 +106,11 @@
   &:hover {
     color: #f08c00 !important;
     background-color: rgba(255, 212, 59, 0.4) !important;
+  }
+}
+
+@media (max-width: 492px) {
+  .label {
+    font-size: 14px;
   }
 }

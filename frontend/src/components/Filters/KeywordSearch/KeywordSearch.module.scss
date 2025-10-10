@@ -53,3 +53,9 @@
   background: transparent !important;
   color: var(--mantine-color-gray-7) !important;
 }
+
+@media (max-width: 492px) {
+  .label {
+    font-size: 14px;
+  }
+}
