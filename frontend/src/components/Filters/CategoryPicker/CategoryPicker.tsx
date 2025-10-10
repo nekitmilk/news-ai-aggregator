@@ -5,18 +5,24 @@ import classes from './CategoryPicker.module.scss';
 import { useApi } from '@/hooks/useApi';
 import { Toast } from '@/components/common/ToastNotify/ToastNotify';
 
-type Props = { value: string[]; onChange: (v: string[]) => void; disabled: boolean };
+type Props = {
+  value: string[];
+  onChange: (v: string[]) => void;
+  disabled: boolean;
+  savedValue?: string[];
+};
 
-export function CategoryPicker({ value = [], onChange, disabled }: Props) {
+export function CategoryPicker({ value = [], onChange, disabled, savedValue = [] }: Props) {
   const [categories, setCategories] = useState<{ label: string; value: string }[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const { makeRequest, loading, error } = useApi();
 
+  const isChanged = JSON.stringify(value) !== JSON.stringify(savedValue);
+
   useEffect(() => {
     const loadCategories = async () => {
       const result = await makeRequest<Category[]>('/categories/');
-
       if (result.success && result.data) {
         const formattedCategories = result.data.map((cat) => ({
           label: cat.name,
@@ -50,55 +56,57 @@ export function CategoryPicker({ value = [], onChange, disabled }: Props) {
 
   return (
     <>
-      <MultiSelect
-        label={
-          <div className={classes.label}>
-            <IconCategory style={{ width: 20, height: 20 }} />
-            Категории новостей
-          </div>
-        }
-        placeholder={placeholder}
-        data={categories}
-        value={value || []}
-        onChange={(newValue) => onChange(newValue || [])}
-        searchable
-        disabled={disabled}
-        clearable={false}
-        nothingFoundMessage="Категория не найдена"
-        withAsterisk={false}
-        radius="md"
-        rightSection={<IconChevronDown style={iconStyle} />}
-        onDropdownOpen={() => setIsOpen(true)}
-        onDropdownClose={() => setIsOpen(false)}
-        maxDropdownHeight={230}
-        classNames={{
-          root: classes.root,
-          wrapper: classes.wrapper,
-          input: classes.input,
-          label: classes.label,
-          dropdown: classes.dropdown,
-          option: classes.option,
-          pill: classes.pill,
-          pillsList: classes.pillsList,
-          section: classes.section,
-        }}
-        comboboxProps={{
-          transitionProps: {
-            transition: 'fade',
-            duration: 0,
-          },
-          position: 'bottom' as const,
-          middlewares: { flip: true, shift: true },
-          offset: 4,
-        }}
-      />
+      <div className={`${classes.root} ${isChanged ? classes.changed : ''}`}>
+        <MultiSelect
+          label={
+            <div className={classes.label}>
+              <IconCategory style={{ width: 20, height: 20 }} />
+              Категории новостей
+            </div>
+          }
+          placeholder={placeholder}
+          data={categories}
+          value={value || []}
+          onChange={(newValue) => onChange(newValue || [])}
+          searchable
+          disabled={disabled}
+          clearable={false}
+          nothingFoundMessage="Категория не найдена"
+          withAsterisk={false}
+          radius="md"
+          rightSection={<IconChevronDown style={iconStyle} />}
+          onDropdownOpen={() => setIsOpen(true)}
+          onDropdownClose={() => setIsOpen(false)}
+          maxDropdownHeight={230}
+          classNames={{
+            root: classes.multiSelectRoot,
+            wrapper: classes.wrapper,
+            input: classes.input,
+            label: classes.label,
+            dropdown: classes.dropdown,
+            option: classes.option,
+            pill: classes.pill,
+            pillsList: classes.pillsList,
+            section: classes.section,
+          }}
+          comboboxProps={{
+            transitionProps: {
+              transition: 'fade',
+              duration: 0,
+            },
+            position: 'bottom' as const,
+            middlewares: { flip: true, shift: true },
+            offset: 4,
+          }}
+        />
+      </div>
       <Toast
         show={showToast}
         onClose={() => setShowToast(false)}
         title="Ошибка"
         message={'Не удалось загрузить категории'}
         type="error"
-        duration={5000}
+        duration={3000}
       />
     </>
   );

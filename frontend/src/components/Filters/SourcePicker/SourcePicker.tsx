@@ -5,13 +5,20 @@ import classes from './SourcePicker.module.scss';
 import { useApi } from '@/hooks/useApi';
 import { Toast } from '@/components/common/ToastNotify/ToastNotify';
 
-type Props = { value: string[]; onChange: (v: string[]) => void; disabled: boolean };
+type Props = {
+  value: string[];
+  onChange: (v: string[]) => void;
+  disabled: boolean;
+  savedValue?: string[];
+};
 
-export function SourcePicker({ value = [], onChange, disabled }: Props) {
+export function SourcePicker({ value = [], onChange, disabled, savedValue = [] }: Props) {
   const [sources, setSources] = useState<{ label: string; value: string }[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const { makeRequest, loading, error } = useApi();
+
+  const isChanged = JSON.stringify(value) !== JSON.stringify(savedValue);
 
   useEffect(() => {
     const loadSources = async () => {
@@ -50,47 +57,49 @@ export function SourcePicker({ value = [], onChange, disabled }: Props) {
 
   return (
     <>
-      <MultiSelect
-        label={
-          <div className={classes.label}>
-            <IconWorld style={{ width: 20, height: 20 }} />
-            Источники новостей
-          </div>
-        }
-        placeholder={placeholder}
-        data={sources}
-        value={value || []}
-        onChange={(newValue) => onChange(newValue || [])}
-        searchable
-        disabled={disabled}
-        clearable={false}
-        nothingFoundMessage="Источник не найден"
-        withAsterisk={false}
-        radius="md"
-        rightSection={<IconChevronDown style={iconStyle} />}
-        onDropdownOpen={() => setIsOpen(true)}
-        onDropdownClose={() => setIsOpen(false)}
-        maxDropdownHeight={200}
-        classNames={{
-          root: classes.root,
-          wrapper: classes.wrapper,
-          input: classes.input,
-          label: classes.label,
-          dropdown: classes.dropdown,
-          option: classes.option,
-          pill: classes.pill,
-          pillsList: classes.pillsList,
-          section: classes.section,
-        }}
-        comboboxProps={{
-          transitionProps: {
-            duration: 0,
-          },
-          position: 'bottom' as const,
-          middlewares: { flip: true, shift: true },
-          offset: 4,
-        }}
-      />
+      <div className={`${classes.root} ${isChanged ? classes.changed : ''}`}>
+        <MultiSelect
+          label={
+            <div className={classes.label}>
+              <IconWorld style={{ width: 20, height: 20 }} />
+              Источники новостей
+            </div>
+          }
+          placeholder={placeholder}
+          data={sources}
+          value={value || []}
+          onChange={(newValue) => onChange(newValue || [])}
+          searchable
+          disabled={disabled}
+          clearable={false}
+          nothingFoundMessage="Источник не найден"
+          withAsterisk={false}
+          radius="md"
+          rightSection={<IconChevronDown style={iconStyle} />}
+          onDropdownOpen={() => setIsOpen(true)}
+          onDropdownClose={() => setIsOpen(false)}
+          maxDropdownHeight={200}
+          classNames={{
+            root: classes.multiSelectRoot,
+            wrapper: classes.wrapper,
+            input: classes.input,
+            label: classes.label,
+            dropdown: classes.dropdown,
+            option: classes.option,
+            pill: classes.pill,
+            pillsList: classes.pillsList,
+            section: classes.section,
+          }}
+          comboboxProps={{
+            transitionProps: {
+              duration: 0,
+            },
+            position: 'bottom' as const,
+            middlewares: { flip: true, shift: true },
+            offset: 4,
+          }}
+        />
+      </div>
 
       <Toast
         show={showToast}
@@ -98,7 +107,7 @@ export function SourcePicker({ value = [], onChange, disabled }: Props) {
         title="Ошибка"
         message={'Не удалось загрузить источники'}
         type="error"
-        duration={5000}
+        duration={3000}
       />
     </>
   );

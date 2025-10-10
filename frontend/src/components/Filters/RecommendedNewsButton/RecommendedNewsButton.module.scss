@@ -1,11 +1,11 @@
-// RecommendedNewsButton.module.scss
 .button {
-  background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%); // Фиолетовый градиент для персонализации
+  background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
   color: white;
   border: none;
   border-radius: 8px;
   padding: 5px 10px;
   font-size: 14px;
+  height: 30px;
   font-weight: 500;
   line-height: 1;
   cursor: pointer;
@@ -18,21 +18,21 @@
   overflow: hidden;
 
   &:hover:not(:disabled) {
-    transform: translateY(-1px);
     box-shadow: 0 6px 20px rgba(159, 122, 234, 0.3);
     background: linear-gradient(135deg, #805ad5 0%, #6b46c1 100%);
   }
 
   &:active:not(:disabled) {
-    transform: translateY(0);
-    box-shadow: 0 2px 10px rgba(159, 122, 234, 0.3);
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 0 1px 3px rgba(159, 122, 234, 0.3);
+    transition: all 0.1s ease;
   }
 
   &:disabled {
     background: #f7fafc;
     color: #a0aec0;
     border: 1.5px solid #e2e8f0;
-    cursor: not-allowed;
+    cursor: default;
     transform: none;
     box-shadow: none;
   }
@@ -67,24 +67,9 @@
 .loading {
   position: relative;
   color: transparent;
-
-  &::after {
-    content: '';
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    top: 50%;
-    left: 50%;
-    margin-left: -8px;
-    margin-top: -8px;
-    border: 2px solid transparent;
-    border-top: 2px solid white;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
 }
 
 .active {
-  background: linear-gradient(135deg, #ed64a6 0%, #d53f8c 100%) !important; // Розовый когда активно
+  background: linear-gradient(135deg, #ed64a6 0%, #d53f8c 100%) !important;
   box-shadow: 0 4px 15px rgba(237, 100, 166, 0.3) !important;
 }

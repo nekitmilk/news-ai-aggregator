@@ -1,9 +1,10 @@
 import { IconFilterShare } from '@tabler/icons-react';
 import classes from './LoadFiltersButton.module.scss';
 import { useApi } from '@/hooks/useApi';
+import { Toast } from '@/components/common/ToastNotify/ToastNotify';
+import { useEffect, useState } from 'react';
 
 type Props = {
-  onClick?: () => void;
   disabled?: boolean;
   loading?: boolean;
   userId: number | null;
@@ -11,75 +12,51 @@ type Props = {
   onError?: (error: string) => void;
 };
 
-export function LoadFiltersButton({
-  onClick,
-  disabled,
-  loading: externalLoading,
-  userId,
-  //   onFiltersLoad,
-  onError,
-}: Props) {
+export function LoadFiltersButton({ disabled, loading: externalLoading, userId, onFiltersLoad, onError }: Props) {
   const { makeRequest, loading: apiLoading, error } = useApi();
-
+  const [showToast, setShowToast] = useState(false);
   const isLoading = externalLoading || apiLoading;
 
   const handleLoadFilters = async () => {
-    // Если передан внешний обработчик, вызываем его
-    if (onClick) {
-      onClick();
-      return;
-    }
-
     if (!userId) {
       onError?.('Пользователь не авторизован');
       return;
     }
-
-    try {
-      const result = await makeRequest('/users/filters/', {
-        method: 'GET',
-        headers: {
-          user_id: userId,
-        },
-      });
-
-      if (result.success) {
-        // if (result.data && result.data.length > 0) {
-        //   // Берем последний сохраненный фильтр
-        //   //   const latestFilter = result.data[result.data.length - 1];
-        //   //   const loadedFilters = {
-        //   //     category: latestFilter.category || [],
-        //   //     source: latestFilter.source || [],
-        //   //     keyword: latestFilter.search || '',
-        //   //     startDate: latestFilter.start_date || '',
-        //   //     endDate: latestFilter.end_date || '',
-        //   //     sort: latestFilter.sort || 'desc',
-        //   //   };
-        //   //   onFiltersLoad?.(loadedFilters);
-        //   //   // Сохраняем в localStorage для быстрого доступа
-        //   //   localStorage.setItem('saved_filters', JSON.stringify(loadedFilters));
-        // } else {
-        //   onError?.('Нет сохраненных фильтров');
-        // }
-      } else {
-        console.error('Ошибка загрузки фильтров:', result.error);
-        onError?.(result.error || 'Неизвестная ошибка');
-      }
-    } catch (err) {
-      console.error('Исключение при загрузке фильтров:', err);
-      onError?.(err instanceof Error ? err.message : 'Неизвестная ошибка');
+    const result = await makeRequest<any[]>(`/users/filters/${userId}`);
+    if (result.success && result.data) {
+      const filters = result.data;
+      onFiltersLoad?.(filters);
+    } else {
+      console.error('Ошибка загрузки фильтров:', result.error);
+      onError?.(result.error || 'Неизвестная ошибка');
+      setShowToast(true);
     }
   };
 
+  useEffect(() => {
+    if (error) {
+      setShowToast(true);
+    }
+  }, [error]);
+
   return (
-    <button
-      onClick={handleLoadFilters}
-      disabled={disabled || isLoading || !userId}
-      className={`${classes.button} ${isLoading ? classes.loading : ''}`}
-      title={error ? `Ошибка: ${error}` : !userId ? 'Требуется авторизация' : undefined}
-    >
-      {!isLoading && <IconFilterShare className={classes.icon} />}
-      {isLoading ? 'Загрузка...' : 'Загрузить фильтры'}
-    </button>
+    <>
+      <button
+        onClick={handleLoadFilters}
+        disabled={disabled || isLoading}
+        className={`${classes.button} ${isLoading ? classes.loading : ''}`}
+      >
+        <IconFilterShare className={classes.icon} />
+        Загрузить фильтры
+      </button>
+      <Toast
+        show={showToast}
+        onClose={() => setShowToast(false)}
+        title="Ошибка"
+        message={'Не удалось загрузить фильтры'}
+        type="error"
+        duration={3000}
+      />
+    </>
   );
 }

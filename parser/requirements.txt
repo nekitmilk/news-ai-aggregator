@@ -5,3 +5,4 @@ Telethon==1.41.2
 lxml_html_clean
 redis
 pika
+fake_useragent

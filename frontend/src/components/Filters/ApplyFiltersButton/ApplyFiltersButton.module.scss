@@ -18,14 +18,14 @@
   justify-content: center;
 
   &:hover:not(:disabled) {
-    transform: translateY(-2px);
     box-shadow: 0 8px 32px rgba(44, 90, 160, 0.3);
     background: linear-gradient(135deg, #1e4a8a 0%, #2c5aa0 100%);
   }
 
   &:active:not(:disabled) {
-    transform: translateY(0);
-    box-shadow: 0 2px 16px rgba(44, 90, 160, 0.2);
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 0 1px 3px rgba(44, 90, 160, 0.3);
+    transition: all 0.1s ease;
   }
 
   &:disabled {
@@ -66,21 +66,6 @@
 .loading {
   position: relative;
   color: transparent;
-
-  &::after {
-    content: '';
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    top: 50%;
-    left: 50%;
-    margin-left: -10px;
-    margin-top: -10px;
-    border: 2px solid transparent;
-    border-top: 2px solid white;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
 }
 
 @keyframes spin {

@@ -4,6 +4,8 @@
   position: sticky;
   top: 0;
   z-index: 100;
+  width: 100vw;
+  left: 0;
 }
 
 .headerContainer {
@@ -32,11 +34,12 @@
   transition: all 0.3s ease;
   width: 200px !important;
   &:hover {
-    transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
   }
 }
-
+.logo {
+  gap: 5px !important;
+}
 .authButton {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -77,36 +80,11 @@
     color: white !important;
   }
 }
+.botButton {
+  font-weight: 600;
+  transition: all 0.3s ease;
 
-// Адаптивность
-@media (max-width: 768px) {
-  .header {
-    height: 60px;
-  }
-
-  .logoText {
-    font-size: 18px;
-  }
-
-  .telegramButton,
-  .authButton {
-    font-size: 14px;
-    padding: 8px 16px;
-  }
-}
-
-@media (max-width: 480px) {
-  .logoText {
-    font-size: 16px;
-  }
-
-  .telegramButton,
-  .authButton {
-    font-size: 12px;
-    padding: 6px 12px;
-
-    & > span {
-      gap: 4px;
-    }
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 136, 204, 0.2);
   }
 }
