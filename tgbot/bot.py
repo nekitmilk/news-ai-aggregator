@@ -147,10 +147,38 @@ def more_news_keyboard(page: int = 2) -> types.InlineKeyboardMarkup:
 async def cmd_start(message: types.Message):
     user_id = message.from_user.id
     ensure_user_initialized(user_id)
+
+    # --- Проверяем, есть ли сохранённые фильтры в бэкенде ---
+    async with aiohttp.ClientSession() as session:
+        headers = {"X-User-ID": str(user_id)}
+        try:
+            async with session.get(f"{API_URL.rstrip('/')}/users/filters/{user_id}", headers=headers, timeout=10) as resp:
+                data = await resp.json()
+                if resp.status != 200 or not data.get("success", True):
+                    # Если фильтров нет, создаём запись с пустыми фильтрами
+                    payload = {
+                        "source": [],
+                        "category": [],
+                        "search": None,
+                        "start_date": None,
+                        "end_date": None,
+                        "sort": "desc"
+                    }
+                    try:
+                        async with session.post(f"{API_URL.rstrip('/')}/users/filters/", json=payload, headers=headers, timeout=10) as post_resp:
+                            # не проверяем результат — делаем тихо
+                            await post_resp.json()
+                    except Exception:
+                        pass  # игнорируем ошибки
+        except Exception:
+            pass  # игнорируем ошибки
+
+    # --- Основной стартовый текст и клавиатура ---
     await message.answer(
         "👋 Привет! Чтобы получать новости по твоим фильтрам или все новости, используй кнопки ниже.",
         reply_markup=main_reply_keyboard()
     )
+
 
 # ---------------------------
 # Нажатие "Задать фильтры"
