@@ -13,13 +13,14 @@ type NewsBlockProps = {
   source: string;
   date: string;
   url: string;
-  userId: number;
+  userId: number | null;
 };
 
 export function NewsBlock({ id, name, description, category, source, date, url, userId }: NewsBlockProps) {
   const { makeRequest } = useApi();
 
   const handleTrackAndOpen = async () => {
+    if (!userId) return;
     try {
       await makeRequest('/user-history/', {
         method: 'POST',
