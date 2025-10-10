@@ -1,0 +1,5 @@
+redis
+pika
+transformers
+torch
+uuid

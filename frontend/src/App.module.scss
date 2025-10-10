@@ -1,0 +1,317 @@
+.header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.headerContainer {
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.logoText {
+  background: linear-gradient(135deg, #3182ce 0%, #2c5aa0 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.authOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.filterActionsContainer {
+  display: flex;
+  justify-content: space-between !important;
+  width: 100%;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.authModal {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.authHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+
+  h3 {
+    margin: 0;
+    color: #333;
+  }
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+
+  &:hover {
+    color: #333;
+  }
+}
+
+.widgetContainer {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.authHint {
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+  margin-top: 16px;
+}
+
+.main {
+  min-height: calc(100vh - 70px);
+  width: 100%;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 25%, #dbeafe 50%, #eff6ff 75%, #f0fdfa 100%);
+  background-size: 400% 400%;
+  animation: gentleGradient 20s ease infinite;
+  padding: 0;
+  padding-bottom: 40px;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+      radial-gradient(circle at 10% 20%, rgba(186, 230, 253, 0.4) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(191, 219, 254, 0.3) 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(224, 242, 254, 0.2) 0%, transparent 50%);
+    pointer-events: none;
+  }
+}
+
+.section {
+  margin: 0 auto;
+  width: 1200px;
+  padding: 20px 15px;
+}
+
+.paper {
+  backdrop-filter: blur(10px);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 40px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.filterRow {
+  gap: 16px !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  justify-content: space-between !important;
+}
+
+.filterItem {
+  width: 100%;
+}
+
+.sortOrderWrapper {
+  flex: 1;
+  align-self: flex-end;
+}
+
+.dateRow {
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.dateContainer {
+  flex: 1;
+  align-self: end;
+}
+
+.buttonContainer {
+  min-width: 200px;
+  align-self: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.emptyState {
+  text-align: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 24px;
+
+  .emptyText {
+    color: #64748b;
+    font-size: 16px;
+  }
+}
+
+.newsList {
+  gap: 16px;
+}
+
+.loadingState {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: transparent;
+}
+
+.loadingText {
+  color: #666;
+  font-size: 16px;
+}
+
+.endState {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: transparent;
+  border-top: 1px solid #e0e0e0;
+  margin-top: 20px;
+}
+
+.endText {
+  color: #999;
+  font-size: 14px;
+  font-style: italic;
+}
+
+@media (max-width: 1200px) {
+  .section {
+    width: 100% !important;
+    padding: 20px 30px !important;
+  }
+
+  .filterRow {
+    flex-wrap: wrap !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .headerContainer {
+    flex-direction: column !important;
+    gap: 10px !important;
+    text-align: center !important;
+  }
+
+  .paper {
+    padding: 20px !important;
+  }
+
+  .dateRow {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .buttonContainer {
+    min-width: 100% !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: 15px !important;
+  }
+
+  .filterActionsContainer {
+    flex-direction: column !important;
+    gap: 10px !important;
+    align-items: stretch !important;
+  }
+
+  .filterRow {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .dateContainer,
+  .sortOrderWrapper {
+    width: 100% !important;
+  }
+
+  .paper {
+    padding: 16px !important;
+    margin-bottom: 24px !important;
+  }
+
+  .header {
+    padding: 10px !important;
+  }
+
+  .logoText {
+    font-size: 20px !important;
+  }
+
+  .authModal {
+    width: 95% !important;
+    padding: 16px !important;
+  }
+}
+
+@media (max-width: 492px) {
+  .logoText {
+    font-size: 18px !important;
+  }
+
+  .paper {
+    padding: 12px !important;
+  }
+  .filterButtons {
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  .buttonContainer {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  .authModal {
+    max-width: 100% !important;
+    padding: 12px !important;
+  }
+
+  .emptyText {
+    font-size: 14px !important;
+  }
+  .scrollToTopButton {
+    padding: 10px 5px 10px 15px !important;
+  }
+  .scrollBtnText {
+    display: none;
+  }
+}

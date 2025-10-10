@@ -1,0 +1,116 @@
+.container {
+  gap: 10px !important;
+  align-items: flex-end;
+}
+
+.datePicker {
+  flex: 1;
+  //   min-width: 200px;
+}
+
+.dateInput {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  height: 42px;
+  padding: 8px 12px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+  }
+
+  &:focus {
+    border-color: #3182ce;
+    box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+    background: #fafbfc;
+  }
+}
+.label {
+  display: flex;
+  align-items: center !important;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 15px;
+  color: #1a365d;
+}
+
+.labelIcon {
+  width: 18px;
+  height: 18px;
+}
+
+.calendarDropdown {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+.month {
+  padding: 8px;
+}
+
+.day {
+  border-radius: 4px;
+  &[data-weekend] {
+    color: #fa5252;
+
+    &[data-selected] {
+      background-color: #fa5252;
+      color: white;
+      &:hover {
+        background-color: #cb4242;
+      }
+    }
+
+    &:hover:not([data-selected]) {
+      background-color: #ffe3e3 !important;
+    }
+  }
+
+  &[data-selected]:not([data-weekend]) {
+    background-color: #228be6;
+    color: white;
+
+    &:hover {
+      background-color: #1668b0;
+    }
+  }
+
+  &:hover:not([data-selected]):not([data-weekend]) {
+    background-color: #e1e1e1 !important;
+  }
+
+  &[data-outside] {
+    color: #ced4da;
+
+    &[data-weekend] {
+      background-color: #fffafa;
+      color: #e9acac;
+    }
+  }
+  &[data-in-range] {
+    background-color: #e7f5ff;
+  }
+}
+.changed {
+  background-color: #fff8dc !important;
+  transition: background-color 0.3s ease !important;
+}
+.mantine-InputClearButton-root {
+  color: #e67700 !important;
+  background-color: rgba(255, 212, 59, 0.3) !important;
+
+  &:hover {
+    color: #f08c00 !important;
+    background-color: rgba(255, 212, 59, 0.4) !important;
+  }
+}
+
+@media (max-width: 492px) {
+  .label {
+    font-size: 14px;
+  }
+}

@@ -1,0 +1,82 @@
+@use './fonts.scss';
+
+body {
+  font-family: 'Montserrat', sans-serif !important;
+  color: #000000;
+  background-color: #ffffff;
+}
+
+.mantine-DatePicker-month {
+  background: #ffffff;
+}
+
+.mantine-DatePicker-calendarHeader {
+  display: grid !important;
+  grid-template-columns: 1fr max-content max-content !important;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.mantine-DatePicker-calendarHeaderLevel {
+  order: -1 !important;
+  justify-self: flex-start !important;
+  padding-inline: 16px !important;
+  font-weight: 600 !important;
+  color: #1a365d !important;
+  font-size: 14px !important;
+}
+
+.mantine-DatePicker-calendarHeaderControl {
+  color: #4a5568 !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease !important;
+}
+
+.mantine-DatePicker-calendarHeaderControl:hover {
+  background: #ebf5ff !important;
+  color: #3182ce !important;
+}
+
+.mantine-DatePicker-weekday {
+  color: #64748b !important;
+  font-weight: 500 !important;
+  font-size: 12px !important;
+}
+
+.mantine-DatePicker-day {
+  border-radius: 6px !important;
+  font-size: 13px !important;
+  transition: all 0.2s ease !important;
+}
+
+.mantine-DatePicker-day:hover:not([data-disabled]) {
+  background: #ebf5ff !important;
+}
+
+.mantine-DatePicker-day[data-selected] {
+  background: #3182ce !important;
+  color: white !important;
+}
+
+.mantine-DatePicker-day[data-in-range] {
+  background: #dbeafe !important;
+}
+
+.mantine-DatePicker-day[data-first-in-range],
+.mantine-DatePicker-day[data-last-in-range] {
+  background: #3182ce !important;
+  color: white !important;
+}
+
+.mantine-DatePicker-day[data-today] {
+  border: 1px solid #3182ce !important;
+}
+
+.mantine-DatePicker-day[data-disabled] {
+  color: #cbd5e0 !important;
+  background: transparent !important;
+}
+.mantine-InputClearButton-root {
+  background: transparent !important;
+}

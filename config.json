@@ -1,0 +1,162 @@
+{
+    "parser": {
+        "headers": {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://www.google.com/",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "same-origin"
+        },
+        "resources": {
+            "РБК": {
+                "url": "https://www.rbc.ru/",
+                "rss": "https://rssexport.rbc.ru/rbcnews/news/30/full.rss",
+                "url_parser": null,
+                "news_parser": null
+            },
+            "Lenta.ru": {
+                "url": "https://lenta.ru/",
+                "rss": "https://lenta.ru/rss/google-newsstand/main/",
+                "url_parser": null,
+                "news_parser": null
+            },
+            "РИА Новости": {
+                "url": "https://ria.ru/",
+                "rss": "https://ria.ru/export/rss2/archive/index.xml",
+                "url_parser": null,
+                "news_parser": null
+            },
+            "Комсомольская Правда": {
+                "url": "https://www.kp.ru/",
+                "rss": "http://www.kp.ru/rss/allsections.xml",
+                "url_parser": null,
+                "news_parser": null
+            },
+            "ТАСС": {
+                "url": "https://tass.ru/",
+                "rss": "https://tass.ru/rss/v2.xml",
+                "url_parser": null,
+                "news_parser": null
+            },
+            "Интерфакс": {
+                "url": "https://www.interfax.ru/",
+                "rss": "https://www.interfax.ru/rss.asp",
+                "url_parser": null,
+                "news_parser": null
+            },
+            "Коммерсантъ": {
+                "url": "https://www.kommersant.ru/",
+                "rss": "https://www.kommersant.ru/rss/daily.xml",
+                "url_parser": null,
+                "news_parser": null
+            },
+            "Ведомости": {
+                "url": "https://www.vedomosti.ru/",
+                "rss": "https://vedomosti.ru/rss/articles",
+                "url_parser": null,
+                "news_parser": null
+            },
+            "Банк России": {
+                "url": "https://cbr.ru/news/",
+                "rss": "https://cbr.ru/rss/RssNews",
+                "url_parser": null,
+                "news_parser": null
+            },
+            "МИНФИН России": {
+                "url": "https://minfin.gov.ru/",
+                "rss": "https://minfin.gov.ru/rss_news?mod=lib&lim=50",
+                "url_parser": null,
+                "news_parser": null
+            },
+            "Хабр": {
+                "url": "https://habr.com/ru/news/",
+                "rss": "https://habr.com/ru/rss/news/?fl=ru",
+                "url_parser": null,
+                "news_parser": null
+            },
+            "vc.ru": {
+                "url": "https://vc.ru/",
+                "rss": "https://vc.ru/rss",
+                "url_parser": null,
+                "news_parser": null
+            },
+            "cnews": {
+                "url": "https://www.cnews.ru/",
+                "rss": "https://www.cnews.ru/inc/rss/news_line.xml",
+                "url_parser": null,
+                "news_parser": null
+            },
+            "спортс": {
+                "url": "https://www.sports.ru/",
+                "rss": "https://www.sports.ru/rss/all_news.xml",
+                "url_parser": null,
+                "news_parser": null
+            },
+            "РИА Новости Спорт": {
+                "url": "https://rsport.ria.ru/",
+                "rss": "https://rsport.ria.ru/export/rss2/archive/index.xml",
+                "url_parser": null,
+                "news_parser": null
+            },
+            "Элементы": {
+                "url": "https://elementy.ru/",
+                "rss": "https://elementy.ru/rss/news",
+                "url_parser": null,
+                "news_parser": null
+            },
+            "LIFE": {
+                "url": "https://life.ru/",
+                "rss": "https://life.ru/rss",
+                "url_parser": null,
+                "news_parser": null
+            },
+            "MK.ru": {
+                "url": "https://www.mk.ru/news/",
+                "rss": "https://www.mk.ru/rss/news/index.xml",
+                "url_parser": null,
+                "news_parser": null
+            },
+            "MED портал": {
+                "url": "https://medportal.ru/",
+                "rss": "https://medportal.ru/mednovosti.rss",
+                "url_parser": null,
+                "news_parser": null
+            },
+            "Минздрав": {
+                "url": "https://minzdrav.gov.ru/",
+                "rss": "https://minzdrav.gov.ru/news.rss",
+                "url_parser": null,
+                "news_parser": null
+            },
+            "Росздравнадзор": {
+                "url": "https://roszdravnadzor.gov.ru/",
+                "rss": "https://roszdravnadzor.gov.ru/rss",
+                "url_parser": null,
+                "news_parser": null
+            }
+        },
+        "news_limit": 10,
+        "periodicity": 30
+    },
+    "redis": {
+        "host": "redis",
+        "port": 6379,
+        "db": 0
+    },
+    "rabbitmq": {
+    "host": "rabbitmq",
+    "port": 5672,
+    "user": "guest",
+    "password": "guest",
+    "queue": "news_queue",
+    "processed_queue": "processed_news"
+    },
+    "consumer": {
+        "processing_limit": 10,
+        "poll_interval": 5
+    }
+}

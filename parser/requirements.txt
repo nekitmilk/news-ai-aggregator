@@ -1,0 +1,8 @@
+schedule==1.2.2
+newspaper3k==0.2.8
+feedparser==6.0.12
+Telethon==1.41.2
+lxml_html_clean
+redis
+pika
+fake_useragent
