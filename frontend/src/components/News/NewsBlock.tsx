@@ -20,6 +20,7 @@ export function NewsBlock({ id, name, description, category, source, date, url, 
   const { makeRequest } = useApi();
 
   const handleTrackAndOpen = async () => {
+    window.open(url, '_blank', 'noopener,noreferrer');
     if (!userId) return;
     try {
       await makeRequest('/user-history/', {
@@ -32,8 +33,6 @@ export function NewsBlock({ id, name, description, category, source, date, url, 
       });
     } catch (error) {
       console.error('Ошибка при отправке истории:', error);
-    } finally {
-      window.open(url, '_blank', 'noopener,noreferrer');
     }
   };
 
